@@ -1,0 +1,15 @@
+# Copyright (C) 2026 Tom Kriha Goldstein > Geshmak!
+# This file is distributed under the same license as the Geshmak! - Luach plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Geshmak! - Luach 1.0.0\n"
+"Report-Msgid-Bugs-To: https://github.com/geshmak-digital/geshmak-luach/issues\n"
+"Last-Translator: Tom Kriha Goldstein <tom@krihagoldstein.com.au>\n"
+"Language-Team: Geshmak! <tom@krihagoldstein.com.au>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Domain: geshmak-luach\n"
+
+# Translators: run a POT generator (e.g. `wp i18n make-pot . languages/geshmak-luach.pot`)
+# to populate this template with the plugin's translatable strings.

@@ -1,0 +1,98 @@
+/** בס״ד
+ * Geshmak! - Luach — front-end styles.
+ * Minimal, namespaced (geshmak-luach-), atomic-CSS safe. Never targets
+ * .elementor-widget-container or any V3 wrapper class.
+ */
+
+.geshmak-luach {
+	font-size: inherit;
+	line-height: 1.5;
+}
+
+.geshmak-luach .geshmak-luach-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.geshmak-luach .geshmak-luach-item {
+	margin: 0 0 0.35em;
+}
+
+.geshmak-luach .geshmak-luach-title {
+	font-weight: 600;
+}
+
+.geshmak-luach .geshmak-luach-time,
+.geshmak-luach .geshmak-luach-date {
+	opacity: 0.85;
+	white-space: nowrap;
+}
+
+.geshmak-luach .geshmak-luach-he {
+	font-family: inherit;
+	unicode-bidi: isolate;
+}
+
+.geshmak-luach .geshmak-luach-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.geshmak-luach .geshmak-luach-table th,
+.geshmak-luach .geshmak-luach-table td {
+	text-align: start;
+	padding: 0.25em 0.6em 0.25em 0;
+	vertical-align: top;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.geshmak-luach .geshmak-luach-table th {
+	font-weight: 500;
+}
+
+.geshmak-luach .geshmak-luach-table td {
+	white-space: nowrap;
+	text-align: end;
+}
+
+.geshmak-luach .geshmak-luach-zmanim-date,
+.geshmak-luach .geshmak-luach-leyning-name {
+	font-weight: 600;
+	margin-bottom: 0.4em;
+}
+
+.geshmak-luach .geshmak-luach-leyning-summary,
+.geshmak-luach .geshmak-luach-haftarah {
+	margin-top: 0.3em;
+	font-size: 0.95em;
+}
+
+.geshmak-luach .geshmak-luach-label {
+	font-weight: 600;
+}
+
+.geshmak-luach .geshmak-luach-credit {
+	display: block;
+	margin-top: 0.5em;
+	font-size: 0.75em;
+	opacity: 0.7;
+}
+
+.geshmak-luach.geshmak-luach-empty {
+	opacity: 0.75;
+	font-style: italic;
+}
+
+/* "Today" panel used by the atomic widget. */
+.geshmak-luach-today .geshmak-luach-today-row {
+	display: flex;
+	justify-content: space-between;
+	gap: 1em;
+	padding: 0.3em 0;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.geshmak-luach-today .geshmak-luach-today-row:last-child {
+	border-bottom: 0;
+}
