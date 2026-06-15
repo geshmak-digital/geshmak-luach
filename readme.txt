@@ -4,7 +4,7 @@ Donate link:
 Tags: hebcal, jewish calendar, zmanim, candle lighting, parsha, hebrew date, elementor
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -154,6 +154,11 @@ Yes. Every shortcode and Elementor surface accepts per-instance overrides (locat
 2. A candle-lighting shortcode rendered on the front end.
 
 == Changelog ==
+
+= 1.0.4 =
+
+* Fix: parsha, candle lighting and leyning surfaces showed the first item of the Gregorian year (e.g. a parsha from January) instead of the upcoming one. They now default to a forward window starting today, so "this week's parsha", "next candle lighting" and "next holiday" are correct. Explicit year/month/start/end attributes still override.
+* Cron warmer now primes the exact default surface calls so visitors hit a warm cache.
 
 = 1.0.3 =
 

@@ -389,7 +389,7 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 		 * @param array $args
 		 * @return array
 		 */
-		protected function build_calendar_params( $args ) {
+		protected function build_calendar_params( $args, $default_days = null ) {
 			$s      = $this->get_settings();
 			$params = array( 'v' => '1' );
 
@@ -409,23 +409,50 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 				$params['M'] = 'on'; // Havdalah by tzeit (3 small stars).
 			}
 
-			// Date window.
-			if ( ! empty( $args['year'] ) ) {
-				$params['year'] = preg_replace( '/[^0-9a-z]/i', '', (string) $args['year'] );
-			} else {
-				$params['year'] = 'now';
-			}
-			if ( ! empty( $args['month'] ) ) {
-				$params['month'] = preg_replace( '/[^0-9a-z]/i', '', (string) $args['month'] );
-			}
-			if ( ! empty( $args['start'] ) ) {
-				$params['start'] = sanitize_text_field( $args['start'] );
-			}
-			if ( ! empty( $args['end'] ) ) {
-				$params['end'] = sanitize_text_field( $args['end'] );
-			}
+			// Date window. Precedence: explicit start/end > year(+month) > a forward
+			// window from today. The forward window matters because "this week / next"
+			// surfaces must NOT fall back to year=now, which returns the whole Gregorian
+			// year starting in January (so items[0] would be January's parsha, not the
+			// upcoming one).
+			$params += $this->resolve_date_window( $args, $default_days );
 
 			return $params;
+		}
+
+		/**
+		 * Resolve a Hebcal date window from args.
+		 *
+		 * @param array    $args
+		 * @param int|null $default_days When set and no explicit window is given, query
+		 *                               today → today + N days instead of the whole year.
+		 * @return array start/end or year(+month) params.
+		 */
+		protected function resolve_date_window( $args, $default_days = null ) {
+			if ( ! empty( $args['start'] ) || ! empty( $args['end'] ) ) {
+				$start = ! empty( $args['start'] ) ? sanitize_text_field( $args['start'] ) : current_time( 'Y-m-d' );
+				return array(
+					'start' => $start,
+					'end'   => ! empty( $args['end'] ) ? sanitize_text_field( $args['end'] ) : $start,
+				);
+			}
+
+			if ( ! empty( $args['year'] ) ) {
+				$window = array( 'year' => preg_replace( '/[^0-9a-z]/i', '', (string) $args['year'] ) );
+				if ( ! empty( $args['month'] ) ) {
+					$window['month'] = preg_replace( '/[^0-9a-z]/i', '', (string) $args['month'] );
+				}
+				return $window;
+			}
+
+			if ( null !== $default_days ) {
+				$start = current_time( 'Y-m-d' );
+				return array(
+					'start' => $start,
+					'end'   => gmdate( 'Y-m-d', strtotime( $start . ' +' . (int) $default_days . ' days' ) ),
+				);
+			}
+
+			return array( 'year' => 'now' );
 		}
 
 		/**
@@ -476,7 +503,8 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 		 * @return array { items: [...], attribution: [...] } or { error }
 		 */
 		public function get_candle_times( $args = array() ) {
-			$params      = $this->build_calendar_params( $args );
+			// Default to this week + a little (next Shabbos) rather than the whole year.
+			$params      = $this->build_calendar_params( $args, 8 );
 			$params['c'] = 'on'; // Candle lighting.
 
 			$data = $this->fetch( self::ENDPOINT_CALENDAR, $params );
@@ -510,7 +538,8 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 		 * @return array
 		 */
 		public function get_parsha( $args = array() ) {
-			$params      = $this->build_calendar_params( $args );
+			// Default to the upcoming Shabbos, not the whole Gregorian year.
+			$params      = $this->build_calendar_params( $args, 8 );
 			$params['s'] = 'on'; // Sedrot / parsha.
 			if ( ! empty( $args['leyning'] ) ) {
 				$params['leyning'] = 'on';
@@ -544,7 +573,9 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 		 * @return array
 		 */
 		public function get_holidays( $args = array() ) {
-			$params = $this->build_calendar_params( $args );
+			// Default to the next ~6 months from today so "next holiday" always resolves
+			// (and never starts back in January). Callers can still pass year/start/end.
+			$params = $this->build_calendar_params( $args, 180 );
 
 			// Family toggles — default to the standard holiday set when nothing specified.
 			$map = array(
@@ -614,16 +645,12 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 		public function get_leyning( $args = array() ) {
 			$params = array();
 
-			if ( ! empty( $args['start'] ) ) {
-				$params['start'] = sanitize_text_field( $args['start'] );
+			// Default to the upcoming Shabbos rather than the whole year from January.
+			$params += $this->resolve_date_window( $args, 8 );
+			if ( isset( $params['year'] ) && ! isset( $params['month'] ) ) {
+				$params['month'] = 'x'; // Explicit year → whole-year leyning.
 			}
-			if ( ! empty( $args['end'] ) ) {
-				$params['end'] = sanitize_text_field( $args['end'] );
-			}
-			if ( empty( $params['start'] ) && empty( $params['end'] ) ) {
-				$params['year']  = ! empty( $args['year'] ) ? preg_replace( '/[^0-9]/', '', (string) $args['year'] ) : gmdate( 'Y' );
-				$params['month'] = 'x';
-			}
+
 			if ( $this->resolve_israel( $args ) ) {
 				$params['i'] = 'on';
 			}

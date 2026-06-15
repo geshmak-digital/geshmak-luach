@@ -59,27 +59,20 @@ if ( ! function_exists( 'geshmak_luach_cron_warm' ) ) {
 
 		$service = geshmak_luach_service();
 
-		$today      = current_time( 'Y-m-d' );
-		$next_week  = gmdate( 'Y-m-d', strtotime( $today . ' +13 days' ) );
+		// Warm the exact default surface calls a visitor hits today (each method now
+		// defaults to a forward window from today), so the cache keys line up.
+		$service->get_candle_times();
+		$service->get_parsha();
+		$service->get_parsha( array( 'leyning' => true ) );
+		$service->get_holidays();
+		$service->get_leyning();
 
-		// Calendar window covering this week + next week (candles, parsha, holidays).
-		$window = array(
-			'start' => $today,
-			'end'   => $next_week,
-		);
-
-		$service->get_candle_times( $window );
-		$service->get_parsha( array_merge( $window, array( 'leyning' => true ) ) );
-		$service->get_holidays( $window );
-
-		// Zmanim for each of the next 14 days at the default location.
-		for ( $i = 0; $i < 14; $i++ ) {
-			$date = gmdate( 'Y-m-d', strtotime( $today . ' +' . $i . ' days' ) );
-			$service->get_zmanim( array( 'date' => $date, 'times' => array( 'all' ) ) );
-		}
+		// Today's zmanim — default subset and the full set.
+		$service->get_zmanim();
+		$service->get_zmanim( array( 'times' => array( 'all' ) ) );
 
 		// Today's Hebrew date.
-		$service->get_hebrew_date( array( 'date' => $today ) );
+		$service->get_hebrew_date();
 	}
 }
 

@@ -3,7 +3,7 @@
  * Plugin Name: Geshmak! - Luach
  * Plugin URI: https://github.com/geshmak-digital/geshmak-luach/
  * Description: Exposes the full Hebcal API suite — Jewish calendar, candle lighting, parsha, zmanim, Hebrew dates, holidays, leyning and yahrzeits — through WordPress shortcodes, Elementor (V3) dynamic tags and Elementor Atomic (V4) widgets. Aggressively cached, transliteration-aware, RTL-ready.
- * Version: 1.0.3
+ * Version: 1.0.4
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: Tom Kriha Goldstein > Geshmak! > https://geshmak.com.au/
