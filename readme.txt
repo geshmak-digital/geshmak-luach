@@ -4,7 +4,7 @@ Donate link:
 Tags: hebcal, jewish calendar, zmanim, candle lighting, parsha, hebrew date, elementor
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -154,6 +154,10 @@ Yes. Every shortcode and Elementor surface accepts per-instance overrides (locat
 2. A candle-lighting shortcode rendered on the front end.
 
 == Changelog ==
+
+= 1.0.3 =
+
+* Fix: candle lighting, havdalah and zmanim times displayed about half a day out (evening times shown as morning). Times are now formatted using the UTC offset Hebcal embeds in each value via wp_date(), so they show in the correct local time of the location — regardless of the WordPress site timezone.
 
 = 1.0.2 =
 

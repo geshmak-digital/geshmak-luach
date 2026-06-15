@@ -61,11 +61,9 @@ if ( ! function_exists( 'geshmak_luach_format_time' ) ) {
 		if ( '' === (string) $iso ) {
 			return '';
 		}
-		$ts = strtotime( $iso );
-		if ( ! $ts ) {
-			return esc_html( $iso );
-		}
-		return esc_html( date_i18n( get_option( 'time_format', 'g:i a' ), $ts ) );
+		// Honour the timezone offset Hebcal embeds in the ISO datetime.
+		$formatted = geshmak_luach_format_iso_time( $iso );
+		return '' === $formatted ? esc_html( (string) $iso ) : esc_html( $formatted );
 	}
 }
 
@@ -80,15 +78,8 @@ if ( ! function_exists( 'geshmak_luach_format_date' ) ) {
 		if ( '' === (string) $date ) {
 			return '';
 		}
-		$ts = strtotime( $date );
-		if ( ! $ts ) {
-			return esc_html( $date );
-		}
-		$fmt = geshmak_luach_service()->get_setting( 'date_format' );
-		if ( ! $fmt ) {
-			$fmt = get_option( 'date_format', 'F j, Y' );
-		}
-		return esc_html( date_i18n( $fmt, $ts ) );
+		$formatted = geshmak_luach_format_iso_date( $date );
+		return '' === $formatted ? esc_html( (string) $date ) : esc_html( $formatted );
 	}
 }
 

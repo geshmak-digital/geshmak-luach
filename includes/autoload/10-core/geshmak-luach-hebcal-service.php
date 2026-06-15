@@ -871,12 +871,12 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 		 * @return string
 		 */
 		protected function extract_time( $item ) {
-			// Hebcal exposes an ISO datetime in `date` for timed events.
+			// Hebcal exposes an ISO datetime (with the location's UTC offset) in `date`
+			// for timed events. Format honouring that embedded offset.
 			if ( ! empty( $item['date'] ) && false !== strpos( $item['date'], 'T' ) ) {
-				$ts = strtotime( $item['date'] );
-				if ( $ts ) {
-					$fmt = $this->get_setting( 'date_format' );
-					return $fmt ? date_i18n( 'g:i a', $ts ) : date_i18n( get_option( 'time_format', 'g:i a' ), $ts );
+				$formatted = geshmak_luach_format_iso_time( $item['date'] );
+				if ( '' !== $formatted ) {
+					return $formatted;
 				}
 			}
 			// Fallback: a trailing time in the title ("Candle lighting: 6:12pm").
@@ -929,6 +929,62 @@ if ( ! function_exists( 'geshmak_luach_to_bool' ) ) {
 			return $value;
 		}
 		return in_array( strtolower( (string) $value ), array( '1', 'on', 'yes', 'true' ), true );
+	}
+}
+
+if ( ! function_exists( 'geshmak_luach_format_iso_time' ) ) {
+	/**
+	 * Format a Hebcal ISO datetime as a localised time, honouring the UTC offset
+	 * embedded in the string.
+	 *
+	 * Hebcal returns each time in the LOCATION's timezone (e.g. "...T18:12:00+10:00").
+	 * We format using that embedded offset via wp_date() — NOT date_i18n() with a raw
+	 * timestamp (which renders the UTC wall-clock and lands ~half a day out) and NOT a
+	 * forced site timezone (which would be wrong when showing another city's zmanim).
+	 *
+	 * @param string $iso
+	 * @param string $format Optional; defaults to the site time format.
+	 * @return string Plain (unescaped) localised time, or '' on failure.
+	 */
+	function geshmak_luach_format_iso_time( $iso, $format = '' ) {
+		$iso = (string) $iso;
+		if ( '' === $iso ) {
+			return '';
+		}
+		$dt = date_create( $iso );
+		if ( ! $dt ) {
+			return '';
+		}
+		if ( '' === $format ) {
+			$format = get_option( 'time_format', 'g:i a' );
+		}
+		return wp_date( $format, $dt->getTimestamp(), $dt->getTimezone() );
+	}
+}
+
+if ( ! function_exists( 'geshmak_luach_format_iso_date' ) ) {
+	/**
+	 * Format a Hebcal date (ISO datetime or plain Y-m-d) as a localised date,
+	 * honouring any embedded UTC offset.
+	 *
+	 * @param string $iso
+	 * @param string $format Optional; defaults to the Luach date format then the site format.
+	 * @return string Plain (unescaped) localised date, or '' on failure.
+	 */
+	function geshmak_luach_format_iso_date( $iso, $format = '' ) {
+		$iso = (string) $iso;
+		if ( '' === $iso ) {
+			return '';
+		}
+		$dt = date_create( $iso );
+		if ( ! $dt ) {
+			return '';
+		}
+		if ( '' === $format ) {
+			$cfg    = geshmak_luach_service()->get_setting( 'date_format' );
+			$format = $cfg ? $cfg : get_option( 'date_format', 'F j, Y' );
+		}
+		return wp_date( $format, $dt->getTimestamp(), $dt->getTimezone() );
 	}
 }
 
