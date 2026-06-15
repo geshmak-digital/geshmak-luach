@@ -25,8 +25,8 @@ use Elementor\Modules\AtomicWidgets\Controls\Section;
 use Elementor\Modules\AtomicWidgets\Controls\Types\Text_Control;
 use Elementor\Modules\AtomicWidgets\Controls\Types\Select_Control;
 use Elementor\Modules\AtomicWidgets\Controls\Types\Switch_Control;
-use Elementor\Modules\AtomicWidgets\PropTypes\String_Prop_Type;
-use Elementor\Modules\AtomicWidgets\PropTypes\Boolean_Prop_Type;
+use Elementor\Modules\AtomicWidgets\PropTypes\Primitives\String_Prop_Type;
+use Elementor\Modules\AtomicWidgets\PropTypes\Primitives\Boolean_Prop_Type;
 use Elementor\Modules\AtomicWidgets\PropTypes\Classes_Prop_Type;
 use Elementor\Modules\AtomicWidgets\Styles\Style_Definition;
 use Elementor\Modules\AtomicWidgets\Styles\Style_Variant;
@@ -56,6 +56,18 @@ if ( ! function_exists( 'geshmak_luach_define_atomic_widgets' ) ) {
 		if ( class_exists( 'Geshmak_Luach_Atomic_Base' ) ) {
 			return;
 		}
+
+		// Primitive prop types moved from PropTypes\ to PropTypes\Primitives\ in
+		// Elementor 4.1. The `use` statements above target the 4.1+ location; bridge
+		// the alias on older atomic builds so the same code runs on both.
+		foreach ( array( 'String_Prop_Type', 'Boolean_Prop_Type', 'Number_Prop_Type' ) as $geshmak_luach_pt ) {
+			$primitive = 'Elementor\\Modules\\AtomicWidgets\\PropTypes\\Primitives\\' . $geshmak_luach_pt;
+			$legacy    = 'Elementor\\Modules\\AtomicWidgets\\PropTypes\\' . $geshmak_luach_pt;
+			if ( ! class_exists( $primitive ) && class_exists( $legacy ) ) {
+				class_alias( $legacy, $primitive );
+			}
+		}
+		unset( $geshmak_luach_pt, $primitive, $legacy );
 
 		// -------------------------------------------------------------------
 		// SHARED BASE

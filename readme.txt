@@ -4,7 +4,7 @@ Donate link:
 Tags: hebcal, jewish calendar, zmanim, candle lighting, parsha, hebrew date, elementor
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -154,6 +154,10 @@ Yes. Every shortcode and Elementor surface accepts per-instance overrides (locat
 2. A candle-lighting shortcode rendered on the front end.
 
 == Changelog ==
+
+= 1.0.2 =
+
+* Fix: the atomic widgets now register and display on Elementor 4.1+. The primitive prop types (String/Boolean) moved to a new namespace (PropTypes\Primitives\) in Elementor 4.1; the widgets now target that location, with a bridge that keeps them working on older 4.0.x atomic builds too. This restores the five Luach atomic widgets that 1.0.1 was safely skipping.
 
 = 1.0.1 =
 
