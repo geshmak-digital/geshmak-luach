@@ -125,18 +125,15 @@ if ( ! function_exists( 'geshmak_luach_define_atomic_widgets' ) ) {
 			}
 
 			/**
-			 * Minimal base style (spacing) — kept atomic-CSS safe.
+			 * No base styles — all presentation is handled by the namespaced
+			 * front-end stylesheet, which keeps these widgets resilient across
+			 * fast-moving atomic style-API versions. Spacing/colour remain fully
+			 * editable via the standard atomic Style tab.
 			 *
 			 * @return array
 			 */
 			protected function define_base_styles(): array {
-				return array(
-					'base' => Style_Definition::make()
-						->add_variant(
-							Style_Variant::make()
-								->add_prop( 'gap', Size_Prop_Type::generate( array( 'size' => 4, 'unit' => 'px' ) ) )
-						),
-				);
+				return array();
 			}
 
 			/**
@@ -399,8 +396,23 @@ if ( ! function_exists( 'geshmak_luach_register_atomic_widgets' ) ) {
 		);
 
 		foreach ( $widgets as $widget ) {
-			if ( class_exists( $widget ) ) {
-				$widgets_manager->register( new $widget() );
+			if ( ! class_exists( $widget ) ) {
+				continue;
+			}
+
+			// Smoke-test the editor-facing API before registering. If the installed
+			// Elementor atomic version can't build this widget's schema/controls,
+			// skip it gracefully instead of letting the editor fatal. This converts
+			// any atomic-API drift into "widget absent" rather than a broken editor.
+			try {
+				$instance = new $widget();
+				$widget::get_props_schema();
+				$instance->get_atomic_controls();
+				$widgets_manager->register( $instance );
+			} catch ( \Throwable $e ) {
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( '[Geshmak Luach] Atomic widget ' . $widget . ' skipped — incompatible Elementor atomic API: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions
+				}
 			}
 		}
 	}

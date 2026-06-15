@@ -54,11 +54,18 @@ if ( ! function_exists( 'geshmak_luach_register_dynamic_tags' ) ) {
 		);
 
 		foreach ( $classes as $class ) {
-			if ( class_exists( $class ) ) {
+			if ( ! class_exists( $class ) ) {
+				continue;
+			}
+			try {
 				if ( method_exists( $tags, 'register' ) ) {
 					$tags->register( new $class() );
 				} elseif ( method_exists( $tags, 'register_tag' ) ) {
 					$tags->register_tag( $class );
+				}
+			} catch ( \Throwable $e ) {
+				if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+					error_log( '[Geshmak Luach] Dynamic tag ' . $class . ' skipped: ' . $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions
 				}
 			}
 		}
