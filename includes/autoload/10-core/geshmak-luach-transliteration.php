@@ -173,8 +173,12 @@ if ( ! function_exists( 'geshmak_luach_zman_labels' ) ) {
 				'misheyakirMachmir' => __( 'Earliest Tallis — stringent', 'geshmak-luach' ),
 				'dawn'            => __( 'Civil Dawn', 'geshmak-luach' ),
 				'sunrise'         => __( 'Sunrise (Neitz Hachamah)', 'geshmak-luach' ),
+				'sofZmanShmaMGA19Point8' => __( 'Latest Shema (MG"A 19.8°)', 'geshmak-luach' ),
+				'sofZmanShmaMGA16Point1' => __( 'Latest Shema (MG"A 16.1°)', 'geshmak-luach' ),
 				'sofZmanShmaMGA'  => __( 'Latest Shema (MG"A)', 'geshmak-luach' ),
 				'sofZmanShma'     => __( 'Latest Shema (Gr"a)', 'geshmak-luach' ),
+				'sofZmanTfillaMGA19Point8' => __( 'Latest Shacharis (MG"A 19.8°)', 'geshmak-luach' ),
+				'sofZmanTfillaMGA16Point1' => __( 'Latest Shacharis (MG"A 16.1°)', 'geshmak-luach' ),
 				'sofZmanTfillaMGA'=> __( 'Latest Shacharis (MG"A)', 'geshmak-luach' ),
 				'sofZmanTfilla'   => __( 'Latest Shacharis (Gr"a)', 'geshmak-luach' ),
 				'chatzot'         => __( 'Midday (Chatzos)', 'geshmak-luach' ),
@@ -191,6 +195,14 @@ if ( ! function_exists( 'geshmak_luach_zman_labels' ) ) {
 				'tzeit42min'      => __( 'Nightfall (Tzeis 42 min)', 'geshmak-luach' ),
 				'tzeit50min'      => __( 'Nightfall (Tzeis 50 min)', 'geshmak-luach' ),
 				'tzeit72min'      => __( 'Rabbeinu Tam (Tzeis 72 min)', 'geshmak-luach' ),
+				// Baal HaTanya (Chabad) zmanim — added in Hebcal's v5 zmanim set.
+				'alosBaalHatanya'         => __( 'Dawn (Baal HaTanya)', 'geshmak-luach' ),
+				'sofZmanShmaBaalHatanya'  => __( 'Latest Shema (Baal HaTanya)', 'geshmak-luach' ),
+				'sofZmanTfilaBaalHatanya' => __( 'Latest Shacharis (Baal HaTanya)', 'geshmak-luach' ),
+				'minchaGedolaBaalHatanya' => __( 'Earliest Mincha (Baal HaTanya)', 'geshmak-luach' ),
+				'minchaKetanaBaalHatanya' => __( 'Mincha Ketana (Baal HaTanya)', 'geshmak-luach' ),
+				'plagHaminchaBaalHatanya' => __( 'Plag Hamincha (Baal HaTanya)', 'geshmak-luach' ),
+				'tzaisBaalHatanya'        => __( 'Nightfall (Baal HaTanya)', 'geshmak-luach' ),
 			)
 		);
 	}

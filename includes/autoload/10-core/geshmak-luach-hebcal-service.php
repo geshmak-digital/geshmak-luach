@@ -291,12 +291,15 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 		/**
 		 * Fetch a Hebcal endpoint with caching and stale-on-error.
 		 *
-		 * @param string $endpoint One of the ENDPOINT_* constants.
-		 * @param array  $params   Query params (cfg=json is added automatically).
-		 * @param int    $ttl      Optional TTL override (seconds).
+		 * @param string $endpoint    One of the ENDPOINT_* constants.
+		 * @param array  $params      Query params (cfg=json is added automatically).
+		 * @param int    $ttl         Optional TTL override (seconds).
+		 * @param bool   $allow_stale Serve a long-lived stale copy on failure (default true).
+		 *                            Set false for real-time data (e.g. Assur Melacha "now")
+		 *                            where a stale value would be misleading.
 		 * @return array|WP_Error  Decoded body array, or WP_Error when no data at all.
 		 */
-		public function fetch( $endpoint, $params, $ttl = null ) {
+		public function fetch( $endpoint, $params, $ttl = null, $allow_stale = true ) {
 			$params['cfg'] = 'json';
 			ksort( $params );
 
@@ -335,8 +338,10 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 
 				if ( 200 === $code && is_array( $data ) ) {
 					$this->cache_set( $key, $data, $ttl );
-					// Long-lived stale copy for resilience.
-					$this->cache_set( $stale_key, $data, YEAR_IN_SECONDS );
+					// Long-lived stale copy for resilience (skipped for real-time data).
+					if ( $allow_stale ) {
+						$this->cache_set( $stale_key, $data, YEAR_IN_SECONDS );
+					}
 					return $data;
 				}
 
@@ -346,9 +351,11 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 			// Failure path — serve the last good value rather than blanking the surface.
 			$this->log( 'Fetch failed for ' . $url . ' :: ' . $error );
 
-			$stale = $this->cache_get( $stale_key );
-			if ( false !== $stale ) {
-				return $stale;
+			if ( $allow_stale ) {
+				$stale = $this->cache_get( $stale_key );
+				if ( false !== $stale ) {
+					return $stale;
+				}
 			}
 
 			return new WP_Error( 'geshmak_luach_fetch_failed', $error );
@@ -587,11 +594,32 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 				'special'     => 'ss',
 				'omer'        => 'o',
 				'molad'       => 'molad',
-				'dafyomi'     => 'F',
-				'mishnayomi'  => 'myomi',
-				'yerushalmi'  => 'yyomi',
-				'nachyomi'    => 'nyomi',
+				// Daily learning schedules.
+				'dafyomi'                  => 'F',
+				'dafweek'                  => 'dw',
+				'mishnayomi'               => 'myomi',
+				'nachyomi'                 => 'nyomi',
+				'yerushalmi'               => 'yyomi',
+				'yerushalmi_schottenstein' => 'yys',
+				'tanachyomi'               => 'dty',
+				'tehillim'                 => 'dps',
+				'rambam1'                  => 'dr1',
+				'rambam3'                  => 'dr3',
+				'seferhamitzvos'           => 'dsm',
+				'kitzur'                   => 'dksa',
+				'arukhhashulchan'          => 'ahsy',
+				'chofetzchaim'             => 'dcc',
+				'shemirashalashon'         => 'dshl',
+				'pirkeiavos'               => 'dpa',
 			);
+
+			// Convenience: a `learning` CSV expands into the individual toggles above.
+			if ( ! empty( $args['learning'] ) ) {
+				$wanted = is_array( $args['learning'] ) ? $args['learning'] : array_map( 'trim', explode( ',', $args['learning'] ) );
+				foreach ( $wanted as $slug ) {
+					$args[ sanitize_key( $slug ) ] = 1;
+				}
+			}
 
 			$any = false;
 			foreach ( $map as $arg_key => $hc_key ) {
@@ -869,10 +897,15 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 			foreach ( (array) ( isset( $data['items'] ) ? $data['items'] : array() ) as $item ) {
 				$title   = isset( $item['title'] ) ? $item['title'] : '';
 				$hebrew  = isset( $item['hebrew'] ) ? $item['hebrew'] : '';
+				// The yahrzeit API returns the Hebrew date as a transliterated string
+				// (e.g. "18 Adar 5786") in `hdate`, not Hebrew script — remap it too.
+				$hdate   = isset( $item['hdate'] ) ? $item['hdate'] : '';
 				$items[] = array(
 					'title'    => geshmak_luach_transliterate( $title, $scheme, $hebrew ),
 					'title_en' => $title,
 					'hebrew'   => $hebrew,
+					'hdate'    => geshmak_luach_transliterate( $hdate, $scheme, '' ),
+					'hdate_en' => $hdate,
 					'date'     => isset( $item['date'] ) ? $item['date'] : '',
 					'category' => isset( $item['category'] ) ? $item['category'] : '',
 					'memo'     => isset( $item['memo'] ) ? $item['memo'] : '',
@@ -883,6 +916,45 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 			return array(
 				'type'        => $type,
 				'items'       => $items,
+				'attribution' => $this->attribution(),
+			);
+		}
+
+		/**
+		 * Assur Melacha (work-forbidden) status for a location and moment.
+		 *
+		 * Uses the /zmanim endpoint in issur-melacha mode (im=1). This is REAL-TIME
+		 * data — it flips at candle lighting / havdalah — so it is only briefly cached
+		 * (default now) and never served stale on error.
+		 *
+		 * @param array $args geonameid|latitude|longitude|tzid|elevation|datetime(ISO 8601)
+		 * @return array { ok, is_assur, local_time, location, attribution } or { error }
+		 */
+		public function get_assur_melacha( $args = array() ) {
+			$params       = $this->resolve_location( $args );
+			$params['im'] = '1';
+
+			$has_dt = ! empty( $args['datetime'] );
+			if ( $has_dt ) {
+				$params['dt'] = sanitize_text_field( $args['datetime'] );
+			}
+
+			// Explicit moment → deterministic (cache long). "Now" → cache ~1 min, no stale.
+			$ttl         = $has_dt ? YEAR_IN_SECONDS : MINUTE_IN_SECONDS;
+			$allow_stale = $has_dt;
+
+			$data = $this->fetch( self::ENDPOINT_ZMANIM, $params, $ttl, $allow_stale );
+			if ( is_wp_error( $data ) ) {
+				return $this->error_result( $data );
+			}
+
+			$status = isset( $data['status'] ) ? $data['status'] : array();
+
+			return array(
+				'ok'          => isset( $status['isAssurBemlacha'] ),
+				'is_assur'    => ! empty( $status['isAssurBemlacha'] ),
+				'local_time'  => isset( $status['localTime'] ) ? $status['localTime'] : '',
+				'location'    => isset( $data['location'] ) ? $data['location'] : array(),
 				'attribution' => $this->attribution(),
 			);
 		}
@@ -1053,5 +1125,10 @@ if ( ! function_exists( 'geshmak_luach_get_yahrzeit' ) ) {
 if ( ! function_exists( 'geshmak_luach_convert_date' ) ) {
 	function geshmak_luach_convert_date( $args = array() ) {
 		return geshmak_luach_service()->convert_date( $args );
+	}
+}
+if ( ! function_exists( 'geshmak_luach_get_assur_melacha' ) ) {
+	function geshmak_luach_get_assur_melacha( $args = array() ) {
+		return geshmak_luach_service()->get_assur_melacha( $args );
 	}
 }

@@ -4,16 +4,16 @@ Donate link:
 Tags: hebcal, jewish calendar, zmanim, candle lighting, parsha, hebrew date, elementor
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.0.4
+Stable tag: 1.1.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Bring the full Hebcal API suite to WordPress, Elementor and Elementor Atomic — candle lighting, parsha, zmanim, Hebrew dates, holidays, leyning and yahrzeits. https://geshmak.com.au
+Access the full Hebcal API suite to WordPress, Elementor and Elementor Atomic — candle lighting, parsha, zmanim, Hebrew dates, holidays, leyning and yahrzeits. https://geshmak.com.au
 
 == Description ==
 
-**Geshmak! - Luach** exposes the complete Hebcal REST API through WordPress in three ways:
+**Geshmak Luach** exposes the complete Hebcal REST API through WordPress in three ways:
 
 * **Shortcodes** — one per Hebcal family, with attributes that override the site defaults per instance.
 * **Elementor (V3) dynamic tags** — bind any Heading or Text widget to this week's parsha, candle lighting, today's Hebrew date, the next holiday, and more.
@@ -28,6 +28,7 @@ Every surface calls a single cached Hebcal service, so the API is never hit dire
 * Leyning / Torah Reading: full kriyah, triennial, weekday, maftir and haftarah.
 * Zmanim (`/zmanim`): the full set of halachic times, with elevation support.
 * Yahrzeit / Hebrew Birthday / Anniversary.
+* Assur Melacha (work-forbidden) status for a location and moment.
 
 **Caching & resilience**
 
@@ -99,15 +100,21 @@ Examples:
 
 **6. `[geshmak_luach_holidays]` — Holidays**
 Family toggles (set any to `1`): `major`, `minor`, `modern`, `roshchodesh`, `fasts`, `special`, `omer`, `molad`, `dafyomi`, `mishnayomi`, `yerushalmi`, `nachyomi`. With none set, the standard holiday set is shown. Also: `upcoming="1"` (only future items) and `limit` (max number of items).
+Daily-learning schedules can be added with `learning="..."` (comma-separated): `dafyomi`, `dafweek`, `mishnayomi`, `nachyomi`, `yerushalmi`, `yerushalmi_schottenstein`, `tanachyomi`, `tehillim`, `rambam1`, `rambam3`, `seferhamitzvos`, `kitzur`, `arukhhashulchan`, `chofetzchaim`, `shemirashalashon`, `pirkeiavos`.
 Example: `[geshmak_luach_holidays major="1" upcoming="1" limit="5"]`
+Example: `[geshmak_luach_holidays learning="dafyomi,rambam1" upcoming="1"]`
 
 **7. `[geshmak_luach_leyning]` — Torah reading detail**
 Shows the full kriyah (each aliyah) and Haftarah. Options: `triennial="1"`, `weekday="1"` (Monday/Thursday reading), plus the date-range options.
 Example: `[geshmak_luach_leyning start="2026-10-01" end="2026-10-31"]`
 
 **8. `[geshmak_luach_yahrzeit]` — Yahrzeit / Hebrew birthday / anniversary**
-Options: `type` (`Yahrzeit`, `Birthday`, or `Anniversary`), `name`, the original Gregorian date as `date` (`YYYY-MM-DD`) or `gy`/`gm`/`gd`, `after_sunset` (`1` if the event was after sunset), and `years` (how many future occurrences to list).
+Options: `type` (`Yahrzeit`, `Birthday`, or `Anniversary`), `name`, the original Gregorian date as `date` (`YYYY-MM-DD`) or `gy`/`gm`/`gd`, `after_sunset` (`1` if the event was after sunset), and `years` (how many future occurrences to list). Output includes the Hebrew date.
 Example: `[geshmak_luach_yahrzeit type="Yahrzeit" name="Moshe ben Yaakov" date="1990-03-15" after_sunset="1" years="5"]`
+
+**9. `[geshmak_luach_assur_melacha]` — Is melacha forbidden now?**
+Shows whether work (melacha) is currently forbidden at the location — i.e. whether it is Shabbos or yom tov right now. Options: the usual location attributes, plus `datetime` (ISO 8601, to check a specific moment instead of now). This is live data, so it is only briefly cached.
+Example: `[geshmak_luach_assur_melacha geonameid="2158177"]`
 
 = Elementor (V3) Dynamic Tags =
 
@@ -154,6 +161,14 @@ Yes. Every shortcode and Elementor surface accepts per-instance overrides (locat
 2. A candle-lighting shortcode rendered on the front end.
 
 == Changelog ==
+
+= 1.1.0 =
+
+* New: `[geshmak_luach_assur_melacha]` shortcode — shows whether melacha (work) is currently forbidden at a location (Hebcal issur-melacha API). Real-time, so it is only briefly cached and never served stale.
+* New: additional daily-learning schedules on the holidays surface via a `learning="..."` attribute — Rambam (1 & 3 chapters), Sefer HaMitzvos, Kitzur Shulchan Aruch, Arukh HaShulchan, Chofetz Chaim, Shemiras HaLashon, Pirkei Avos, Tanach Yomi, Daily Tehillim, Daf-a-Week, Yerushalmi (Schottenstein).
+* New: zmanim now include the Baal HaTanya times and the MG"A 19.8°/16.1° variants, with proper labels.
+* Improved: yahrzeit / birthday / anniversary output now shows the Hebrew date (e.g. "18 Adar 5786").
+* Verified the plugin against the current Hebcal REST API (calendar, converter, leyning, yahrzeit, zmanim) — all existing fields and parameters remain compatible.
 
 = 1.0.4 =
 

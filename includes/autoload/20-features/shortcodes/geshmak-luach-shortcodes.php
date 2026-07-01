@@ -230,7 +230,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_holidays' ) ) {
 				'year'      => '', 'month' => '', 'start' => '', 'end' => '',
 				'major'     => '', 'minor' => '', 'modern' => '', 'roshchodesh' => '', 'fasts' => '',
 				'special'   => '', 'omer' => '', 'molad' => '', 'dafyomi' => '',
-				'mishnayomi' => '', 'yerushalmi' => '', 'nachyomi' => '',
+				'mishnayomi' => '', 'yerushalmi' => '', 'nachyomi' => '', 'learning' => '',
 				'upcoming'  => '', 'limit' => '', 'show_hebrew' => '1', 'show_credit' => '1',
 			),
 			$atts,
@@ -240,7 +240,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_holidays' ) ) {
 		$args = geshmak_luach_common_atts( $atts );
 		foreach ( array(
 			'year', 'month', 'start', 'end', 'major', 'minor', 'modern', 'roshchodesh', 'fasts',
-			'special', 'omer', 'molad', 'dafyomi', 'mishnayomi', 'yerushalmi', 'nachyomi', 'upcoming', 'limit',
+			'special', 'omer', 'molad', 'dafyomi', 'mishnayomi', 'yerushalmi', 'nachyomi', 'learning', 'upcoming', 'limit',
 		) as $k ) {
 			if ( '' !== $atts[ $k ] ) {
 				$args[ $k ] = $atts[ $k ];
@@ -308,3 +308,30 @@ if ( ! function_exists( 'geshmak_luach_shortcode_yahrzeit' ) ) {
 	}
 }
 add_shortcode( 'geshmak_luach_yahrzeit', 'geshmak_luach_shortcode_yahrzeit' );
+
+// ---------------------------------------------------------------------------
+// ASSUR MELACHA (WORK FORBIDDEN)
+// ---------------------------------------------------------------------------
+
+if ( ! function_exists( 'geshmak_luach_shortcode_assur_melacha' ) ) {
+	function geshmak_luach_shortcode_assur_melacha( $atts ) {
+		$atts = shortcode_atts(
+			array(
+				'geonameid' => '', 'location' => '', 'latitude' => '', 'longitude' => '', 'tzid' => '',
+				'elevation' => '', 'datetime' => '', 'show_credit' => '1',
+			),
+			$atts,
+			'geshmak_luach_assur_melacha'
+		);
+
+		$args = geshmak_luach_common_atts( $atts );
+		foreach ( array( 'elevation', 'datetime' ) as $k ) {
+			if ( '' !== $atts[ $k ] ) {
+				$args[ $k ] = $atts[ $k ];
+			}
+		}
+
+		return geshmak_luach_render_assur( geshmak_luach_service()->get_assur_melacha( $args ), geshmak_luach_display_atts( $atts ) );
+	}
+}
+add_shortcode( 'geshmak_luach_assur_melacha', 'geshmak_luach_shortcode_assur_melacha' );

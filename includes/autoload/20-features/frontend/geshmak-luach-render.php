@@ -328,9 +328,42 @@ if ( ! function_exists( 'geshmak_luach_render_yahrzeit' ) ) {
 				$html .= '<span class="geshmak-luach-date">' . geshmak_luach_format_date( $item['date'] ) . '</span> ';
 			}
 			$html .= geshmak_luach_title_html( $item, $show_he );
+			if ( ! empty( $item['hdate'] ) ) {
+				$html .= ' <span class="geshmak-luach-hdate">(' . esc_html( $item['hdate'] ) . ')</span>';
+			}
 			$html .= '</li>';
 		}
 		$html .= '</ul>';
+		$html .= geshmak_luach_attribution_html( $data, $credit );
+		$html .= '</div>';
+		return $html;
+	}
+}
+
+if ( ! function_exists( 'geshmak_luach_render_assur' ) ) {
+	/**
+	 * Render the Assur Melacha (work-forbidden) status.
+	 *
+	 * @param array $data
+	 * @param array $a
+	 * @return string
+	 */
+	function geshmak_luach_render_assur( $data, $a = array() ) {
+		geshmak_luach_enqueue_styles();
+		$credit = ! isset( $a['show_credit'] ) || geshmak_luach_to_bool( $a['show_credit'] );
+
+		if ( empty( $data['ok'] ) ) {
+			return geshmak_luach_empty_html( $data, __( 'Status unavailable.', 'geshmak-luach' ) );
+		}
+
+		$assur = ! empty( $data['is_assur'] );
+		$label = $assur
+			? __( 'Melacha is currently forbidden', 'geshmak-luach' )
+			: __( 'Melacha is currently permitted', 'geshmak-luach' );
+		$state = $assur ? 'assur' : 'mutar';
+
+		$html  = '<div class="geshmak-luach geshmak-luach-assur geshmak-luach-' . esc_attr( $state ) . '">';
+		$html .= '<span class="geshmak-luach-assur-status">' . esc_html( $label ) . '</span>';
 		$html .= geshmak_luach_attribution_html( $data, $credit );
 		$html .= '</div>';
 		return $html;

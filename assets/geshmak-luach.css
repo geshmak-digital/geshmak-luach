@@ -84,6 +84,23 @@
 	font-style: italic;
 }
 
+.geshmak-luach .geshmak-luach-hdate {
+	opacity: 0.8;
+}
+
+/* Assur Melacha status. */
+.geshmak-luach-assur .geshmak-luach-assur-status {
+	font-weight: 600;
+}
+
+.geshmak-luach-assur.geshmak-luach-assur .geshmak-luach-assur-status {
+	color: #a1341f;
+}
+
+.geshmak-luach-assur.geshmak-luach-mutar .geshmak-luach-assur-status {
+	color: #1a7f37;
+}
+
 /* "Today" panel used by the atomic widget. */
 .geshmak-luach-today .geshmak-luach-today-row {
 	display: flex;
