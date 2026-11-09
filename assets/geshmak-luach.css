@@ -88,6 +88,18 @@
 	opacity: 0.8;
 }
 
+/* Special Shabbos shown beneath the parsha (Zachor, Parah, HaChodesh…). */
+.geshmak-luach .geshmak-luach-special-shabbos {
+	margin-top: 0.2em;
+	font-size: 0.95em;
+	opacity: 0.9;
+}
+
+/* Hebrew date split into its parts — each span is styleable on its own. */
+.geshmak-luach .geshmak-luach-he-parts {
+	white-space: nowrap;
+}
+
 /* Assur Melacha status. */
 .geshmak-luach-assur .geshmak-luach-assur-status {
 	font-weight: 600;

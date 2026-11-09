@@ -23,15 +23,42 @@ define( 'GESHMAK_LUACH_SETTINGS_SLUG', 'geshmak-luach' );
 // MENU
 // ---------------------------------------------------------------------------
 
-add_action( 'admin_menu', 'geshmak_luach_register_menu' );
+// Priority 20: after the shared "Geshmak!" parent menu (default priority 10) exists.
+add_action( 'admin_menu', 'geshmak_luach_register_menu', 20 );
 
 if ( ! function_exists( 'geshmak_luach_register_menu' ) ) {
 	/**
-	 * Register the top-level Luach menu.
+	 * Register Luach under the shared Geshmak! menu, or as its own top-level
+	 * menu when the shared parent (Geshmak! WordPress Essentials) is not active.
 	 *
 	 * @return void
 	 */
 	function geshmak_luach_register_menu() {
+		global $menu;
+
+		$parent     = defined( 'GESHMAK_UPDATES_SETTINGS_SLUG' ) ? GESHMAK_UPDATES_SETTINGS_SLUG : 'geshmak-updates';
+		$has_parent = false;
+		if ( is_array( $menu ) ) {
+			foreach ( $menu as $item ) {
+				if ( isset( $item[2] ) && $parent === $item[2] ) {
+					$has_parent = true;
+					break;
+				}
+			}
+		}
+
+		if ( $has_parent ) {
+			add_submenu_page(
+				$parent,
+				__( 'Geshmak! - Luach', 'geshmak-luach' ),
+				__( 'Luach', 'geshmak-luach' ),
+				'manage_options',
+				GESHMAK_LUACH_SETTINGS_SLUG,
+				'geshmak_luach_render_settings_page'
+			);
+			return;
+		}
+
 		add_menu_page(
 			__( 'Luach Settings', 'geshmak-luach' ),
 			__( 'Luach', 'geshmak-luach' ),

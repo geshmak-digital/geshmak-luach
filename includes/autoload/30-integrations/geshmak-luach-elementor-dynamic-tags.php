@@ -46,6 +46,7 @@ if ( ! function_exists( 'geshmak_luach_register_dynamic_tags' ) ) {
 
 		$classes = array(
 			'Geshmak_Luach_Tag_Parsha',
+			'Geshmak_Luach_Tag_Special_Shabbos',
 			'Geshmak_Luach_Tag_Candles',
 			'Geshmak_Luach_Tag_Havdalah',
 			'Geshmak_Luach_Tag_Hebrew_Date',
@@ -166,6 +167,26 @@ if ( ! function_exists( 'geshmak_luach_define_dynamic_tag_classes' ) ) {
 				$data = geshmak_luach_service()->get_parsha( $this->service_args() );
 				if ( ! empty( $data['items'][0]['title'] ) ) {
 					$this->output( $data['items'][0]['title'] );
+				}
+			}
+		}
+
+		/**
+		 * This week's special Shabbos (Zachor, Parah, HaChodesh, Shekalim, HaGadol,
+		 * Shuva…). Renders nothing on an ordinary week, so it can sit in a layout
+		 * permanently and simply disappear when it does not apply.
+		 */
+		class Geshmak_Luach_Tag_Special_Shabbos extends Geshmak_Luach_Tag_Base {
+			public function get_name() {
+				return 'geshmak-luach-special-shabbos';
+			}
+			public function get_title() {
+				return __( 'Luach: Special Shabbos', 'geshmak-luach' );
+			}
+			public function render() {
+				$data = geshmak_luach_service()->get_parsha( $this->service_args() );
+				if ( ! empty( $data['items'][0]['special']['title'] ) ) {
+					$this->output( $data['items'][0]['special']['title'] );
 				}
 			}
 		}

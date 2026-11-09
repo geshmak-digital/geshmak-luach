@@ -238,7 +238,10 @@ if ( ! function_exists( 'geshmak_luach_define_atomic_widgets' ) ) {
 			protected static function define_props_schema(): array {
 				return array_merge(
 					parent::define_props_schema(),
-					array( 'show_leyning' => Boolean_Prop_Type::make()->default( false ) )
+					array(
+						'show_leyning' => Boolean_Prop_Type::make()->default( false ),
+						'show_special' => Boolean_Prop_Type::make()->default( true ),
+					)
 				);
 			}
 			protected function define_atomic_controls(): array {
@@ -249,6 +252,8 @@ if ( ! function_exists( 'geshmak_luach_define_atomic_widgets' ) ) {
 						array(
 							Switch_Control::bind_to( 'show_leyning' )
 								->set_label( __( 'Show Torah / Haftarah', 'geshmak-luach' ) ),
+							Switch_Control::bind_to( 'show_special' )
+								->set_label( __( 'Show special Shabbos', 'geshmak-luach' ) ),
 						)
 					);
 				return $controls;
@@ -260,6 +265,7 @@ if ( ! function_exists( 'geshmak_luach_define_atomic_widgets' ) ) {
 				$data            = geshmak_luach_service()->get_parsha( $args );
 				$display                 = $this->display_args( $settings );
 				$display['show_leyning'] = ! empty( $settings['show_leyning'] );
+				$display['show_special'] = ! empty( $settings['show_special'] );
 				$inner = geshmak_luach_render_parsha( $data, $display );
 				$this->render_root( $settings, $inner, 'geshmak-luach-w-parsha' );
 			}
@@ -276,10 +282,30 @@ if ( ! function_exists( 'geshmak_luach_define_atomic_widgets' ) ) {
 			public function get_title(): string {
 				return __( 'Geshmak Luach Hebrew Date', 'geshmak-luach' );
 			}
+			protected static function define_props_schema(): array {
+				return array_merge(
+					parent::define_props_schema(),
+					array( 'show_parts' => Boolean_Prop_Type::make()->default( false ) )
+				);
+			}
+			protected function define_atomic_controls(): array {
+				$controls   = parent::define_atomic_controls();
+				$controls[] = Section::make()
+					->set_label( __( 'Hebrew Date', 'geshmak-luach' ) )
+					->set_items(
+						array(
+							Switch_Control::bind_to( 'show_parts' )
+								->set_label( __( 'Split day / month / year', 'geshmak-luach' ) ),
+						)
+					);
+				return $controls;
+			}
 			protected function render(): void {
 				$settings = $this->get_atomic_settings();
 				$data     = geshmak_luach_service()->get_hebrew_date( $this->service_args( $settings ) );
-				$inner    = geshmak_luach_render_hebrew_date( $data, $this->display_args( $settings ) );
+				$display  = $this->display_args( $settings );
+				$display['show_parts'] = ! empty( $settings['show_parts'] );
+				$inner    = geshmak_luach_render_hebrew_date( $data, $display );
 				$this->render_root( $settings, $inner, 'geshmak-luach-w-hebrew-date' );
 			}
 		}

@@ -541,13 +541,18 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 		/**
 		 * This week's / the requested window's parsha (sedrot), with optional leyning.
 		 *
+		 * Each item carries a `special` key holding the special Shabbos that falls on
+		 * the same date (Zachor, Parah, HaChodesh, Shekalim, HaGadol, Shuva…), or an
+		 * empty array when the week is an ordinary one.
+		 *
 		 * @param array $args israel|translit|year|month|start|end + leyning(bool)
 		 * @return array
 		 */
 		public function get_parsha( $args = array() ) {
 			// Default to the upcoming Shabbos, not the whole Gregorian year.
-			$params      = $this->build_calendar_params( $args, 8 );
-			$params['s'] = 'on'; // Sedrot / parsha.
+			$params       = $this->build_calendar_params( $args, 8 );
+			$params['s']  = 'on';  // Sedrot / parsha.
+			$params['ss'] = 'on';  // Special Shabbatos — arrives as a separate item on the same date.
 			if ( ! empty( $args['leyning'] ) ) {
 				$params['leyning'] = 'on';
 			}
@@ -558,11 +563,33 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 			}
 
 			$scheme = $this->resolve_translit( $args );
-			$items  = array();
-			foreach ( (array) ( isset( $data['items'] ) ? $data['items'] : array() ) as $item ) {
-				if ( isset( $item['category'] ) && 'parashat' === $item['category'] ) {
-					$items[] = $this->normalize_event( $item, $scheme );
+			$raw    = (array) ( isset( $data['items'] ) ? $data['items'] : array() );
+
+			// First pass — index the special Shabbatos (Zachor, Parah, HaChodesh,
+			// Shekalim, HaGadol, Shuva…) by date so the parsha can carry its own.
+			$specials = array();
+			foreach ( $raw as $item ) {
+				$cat    = isset( $item['category'] ) ? $item['category'] : '';
+				$subcat = isset( $item['subcat'] ) ? $item['subcat'] : '';
+				if ( 'holiday' === $cat && 'shabbat' === $subcat && ! empty( $item['date'] ) ) {
+					$date = substr( (string) $item['date'], 0, 10 );
+					if ( ! isset( $specials[ $date ] ) ) {
+						$specials[ $date ] = $this->normalize_event( $item, $scheme );
+					}
 				}
+			}
+
+			// Second pass — the parsha items themselves.
+			$items = array();
+			foreach ( $raw as $item ) {
+				if ( ! isset( $item['category'] ) || 'parashat' !== $item['category'] ) {
+					continue;
+				}
+				$event = $this->normalize_event( $item, $scheme );
+				$date  = ! empty( $item['date'] ) ? substr( (string) $item['date'], 0, 10 ) : '';
+				// Empty array (not null) so callers can test with empty() either way.
+				$event['special'] = ( '' !== $date && isset( $specials[ $date ] ) ) ? $specials[ $date ] : array();
+				$items[]          = $event;
 			}
 
 			return array(
@@ -830,14 +857,28 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 			$hebrew = isset( $data['hebrew'] ) ? $data['hebrew'] : '';
 			$en     = isset( $data['hy'], $data['hm'], $data['hd'] ) ? trim( $data['hd'] . ' ' . $data['hm'] . ' ' . $data['hy'] ) : '';
 
+			// Hebcal also returns the Hebrew date pre-split into its parts
+			// ({"y":"תשפ״ו","m":"אלול","d":"א׳"}) — keep them so surfaces can style
+			// day, month and year separately rather than re-parsing the joined string.
+			$parts = array( 'y' => '', 'm' => '', 'd' => '' );
+			if ( isset( $data['heDateParts'] ) && is_array( $data['heDateParts'] ) ) {
+				foreach ( array( 'y', 'm', 'd' ) as $part ) {
+					if ( isset( $data['heDateParts'][ $part ] ) ) {
+						$parts[ $part ] = (string) $data['heDateParts'][ $part ];
+					}
+				}
+			}
+
 			return array(
 				'gregorian'    => isset( $data['gy'] ) ? sprintf( '%04d-%02d-%02d', $data['gy'], $data['gm'], $data['gd'] ) : '',
 				'hebrew'       => $hebrew,
+				'hebrew_parts' => $parts,
 				'display'      => geshmak_luach_transliterate( $en, $scheme, $hebrew ),
 				'display_en'   => $en,
 				'hy'           => isset( $data['hy'] ) ? $data['hy'] : '',
 				'hm'           => isset( $data['hm'] ) ? $data['hm'] : '',
 				'hd'           => isset( $data['hd'] ) ? $data['hd'] : '',
+				'is_leap_year' => isset( $data['hy'] ) ? geshmak_luach_is_hebrew_leap_year( $data['hy'] ) : false,
 				'after_sunset' => ! empty( $data['afterSunset'] ),
 				'events'       => isset( $data['events'] ) ? $data['events'] : array(),
 				'attribution'  => $this->attribution(),
@@ -901,15 +942,18 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 				// (e.g. "18 Adar 5786") in `hdate`, not Hebrew script — remap it too.
 				$hdate   = isset( $item['hdate'] ) ? $item['hdate'] : '';
 				$items[] = array(
-					'title'    => geshmak_luach_transliterate( $title, $scheme, $hebrew ),
-					'title_en' => $title,
-					'hebrew'   => $hebrew,
-					'hdate'    => geshmak_luach_transliterate( $hdate, $scheme, '' ),
-					'hdate_en' => $hdate,
-					'date'     => isset( $item['date'] ) ? $item['date'] : '',
-					'category' => isset( $item['category'] ) ? $item['category'] : '',
-					'memo'     => isset( $item['memo'] ) ? $item['memo'] : '',
-					'raw'      => $item,
+					'title'       => geshmak_luach_transliterate( $title, $scheme, $hebrew ),
+					'title_en'    => $title,
+					'hebrew'      => $hebrew,
+					'hdate'       => geshmak_luach_transliterate( $hdate, $scheme, '' ),
+					'hdate_en'    => $hdate,
+					'date'        => isset( $item['date'] ) ? $item['date'] : '',
+					'category'    => isset( $item['category'] ) ? $item['category'] : '',
+					'memo'        => isset( $item['memo'] ) ? $item['memo'] : '',
+					// Which occurrence this is (Hebcal returns it as an integer), so
+					// surfaces can say "6th Yahrzeit" without re-parsing the title.
+					'anniversary' => isset( $item['anniversary'] ) ? (int) $item['anniversary'] : 0,
+					'raw'         => $item,
 				);
 			}
 
@@ -1028,6 +1072,26 @@ if ( ! function_exists( 'geshmak_luach_to_bool' ) ) {
 			return $value;
 		}
 		return in_array( strtolower( (string) $value ), array( '1', 'on', 'yes', 'true' ), true );
+	}
+}
+
+if ( ! function_exists( 'geshmak_luach_is_hebrew_leap_year' ) ) {
+	/**
+	 * Is a Hebrew year a leap year (13 months, with Adar I and Adar II)?
+	 *
+	 * Computed locally from the 19-year Metonic cycle — the Hebcal converter does
+	 * not return this, and there is no point spending an API call on arithmetic.
+	 * Leap years are positions 3, 6, 8, 11, 14, 17 and 19 of the cycle.
+	 *
+	 * @param int|string $hy Hebrew year.
+	 * @return bool
+	 */
+	function geshmak_luach_is_hebrew_leap_year( $hy ) {
+		$hy = (int) $hy;
+		if ( $hy <= 0 ) {
+			return false;
+		}
+		return ( ( 7 * $hy + 1 ) % 19 ) < 7;
 	}
 }
 

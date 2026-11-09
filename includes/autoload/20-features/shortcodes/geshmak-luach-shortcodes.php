@@ -60,6 +60,10 @@ if ( ! function_exists( 'geshmak_luach_display_atts' ) ) {
 			'show_hebrew'  => isset( $atts['show_hebrew'] ) ? $atts['show_hebrew'] : '1',
 			'show_credit'  => isset( $atts['show_credit'] ) ? $atts['show_credit'] : '1',
 			'show_leyning' => isset( $atts['show_leyning'] ) ? $atts['show_leyning'] : '0',
+			// Special Shabbos alongside the parsha — on by default.
+			'show_special' => isset( $atts['show_special'] ) ? $atts['show_special'] : '1',
+			// Hebrew date split into styleable day / month / year spans — opt in.
+			'show_parts'   => isset( $atts['show_parts'] ) ? $atts['show_parts'] : '0',
 		);
 	}
 }
@@ -106,6 +110,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_parsha' ) ) {
 				'translit'    => '', 'i' => '', 'israel' => '',
 				'year'        => '', 'month' => '', 'start' => '', 'end' => '',
 				'leyning'     => '0', 'show_leyning' => '', 'show_hebrew' => '1', 'show_credit' => '1',
+				'show_special' => '1',
 			),
 			$atts,
 			'geshmak_luach_parsha'
@@ -166,7 +171,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_hebrew_date' ) ) {
 		$atts = shortcode_atts(
 			array(
 				'date'        => '', 'translit' => '', 'after_sunset' => '',
-				'show_hebrew' => '1', 'show_credit' => '0',
+				'show_hebrew' => '1', 'show_credit' => '0', 'show_parts' => '0',
 			),
 			$atts,
 			'geshmak_luach_hebrew_date'
@@ -199,7 +204,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_convert' ) ) {
 				'direction'   => 'g2h', 'date' => '', 'translit' => '', 'after_sunset' => '',
 				'gy'          => '', 'gm' => '', 'gd' => '',
 				'hy'          => '', 'hm' => '', 'hd' => '',
-				'show_hebrew' => '1', 'show_credit' => '0',
+				'show_hebrew' => '1', 'show_credit' => '0', 'show_parts' => '0',
 			),
 			$atts,
 			'geshmak_luach_convert'

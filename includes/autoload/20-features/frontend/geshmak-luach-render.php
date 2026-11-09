@@ -134,6 +134,35 @@ if ( ! function_exists( 'geshmak_luach_title_html' ) ) {
 	}
 }
 
+if ( ! function_exists( 'geshmak_luach_rtl_parts' ) ) {
+	/**
+	 * Render a Hebrew date as separately styleable day / month / year spans.
+	 *
+	 * Hebcal returns the parts unpointed and without the מ prefix ("אלול"), where the
+	 * joined string carries both ("בֶּאֱלוּל"). Falls back to the joined string whenever
+	 * the parts are missing, so this is always safe to call.
+	 *
+	 * @param array  $parts    heDateParts-shaped array (y, m, d).
+	 * @param string $fallback Joined Hebrew date string.
+	 * @return string
+	 */
+	function geshmak_luach_rtl_parts( $parts, $fallback = '' ) {
+		$d = isset( $parts['d'] ) ? trim( (string) $parts['d'] ) : '';
+		$m = isset( $parts['m'] ) ? trim( (string) $parts['m'] ) : '';
+		$y = isset( $parts['y'] ) ? trim( (string) $parts['y'] ) : '';
+
+		if ( '' === $d || '' === $m || '' === $y ) {
+			return geshmak_luach_rtl( $fallback );
+		}
+
+		return '<span dir="rtl" lang="he" class="geshmak-luach-he geshmak-luach-he-parts">'
+			. '<span class="geshmak-luach-he-d">' . esc_html( $d ) . '</span> '
+			. '<span class="geshmak-luach-he-m">' . esc_html( $m ) . '</span> '
+			. '<span class="geshmak-luach-he-y">' . esc_html( $y ) . '</span>'
+			. '</span>';
+	}
+}
+
 // ---------------------------------------------------------------------------
 // SURFACE RENDERERS — one per Hebcal family.
 // Each accepts the service result ($data) and a display-args array ($a).
@@ -177,12 +206,17 @@ if ( ! function_exists( 'geshmak_luach_render_parsha' ) ) {
 			return geshmak_luach_empty_html( $data, __( 'No parsha found in range.', 'geshmak-luach' ) );
 		}
 
+		$show_special = ! isset( $a['show_special'] ) || geshmak_luach_to_bool( $a['show_special'] );
+
 		$html = '<div class="geshmak-luach geshmak-luach-parsha">';
 		foreach ( $data['items'] as $item ) {
 			$html .= '<div class="geshmak-luach-item">';
 			$html .= '<span class="geshmak-luach-parsha-name">' . geshmak_luach_title_html( $item, $show_he ) . '</span>';
 			if ( ! empty( $item['date'] ) ) {
 				$html .= ' <span class="geshmak-luach-date">' . geshmak_luach_format_date( $item['date'] ) . '</span>';
+			}
+			if ( $show_special && ! empty( $item['special']['title'] ) ) {
+				$html .= '<div class="geshmak-luach-special-shabbos">' . geshmak_luach_title_html( $item['special'], $show_he ) . '</div>';
 			}
 			if ( ! empty( $a['show_leyning'] ) && geshmak_luach_to_bool( $a['show_leyning'] ) && ! empty( $item['leyning']['torah'] ) ) {
 				$html .= '<div class="geshmak-luach-leyning-summary"><span class="geshmak-luach-label">' . esc_html__( 'Torah:', 'geshmak-luach' ) . '</span> ' . esc_html( $item['leyning']['torah'] );
@@ -233,10 +267,14 @@ if ( ! function_exists( 'geshmak_luach_render_hebrew_date' ) ) {
 			return geshmak_luach_empty_html( $data, __( 'Date unavailable.', 'geshmak-luach' ) );
 		}
 
+		$show_parts = isset( $a['show_parts'] ) && geshmak_luach_to_bool( $a['show_parts'] );
+
 		$html  = '<div class="geshmak-luach geshmak-luach-hebrew-date">';
 		$html .= '<span class="geshmak-luach-title">' . esc_html( $data['display'] ) . '</span>';
 		if ( $show_he && ! empty( $data['hebrew'] ) ) {
-			$html .= ' ' . geshmak_luach_rtl( $data['hebrew'] );
+			$html .= ' ' . ( $show_parts
+				? geshmak_luach_rtl_parts( isset( $data['hebrew_parts'] ) ? $data['hebrew_parts'] : array(), $data['hebrew'] )
+				: geshmak_luach_rtl( $data['hebrew'] ) );
 		}
 		$html .= geshmak_luach_attribution_html( $data, $credit );
 		$html .= '</div>';
@@ -323,7 +361,11 @@ if ( ! function_exists( 'geshmak_luach_render_yahrzeit' ) ) {
 		$html  = '<div class="geshmak-luach geshmak-luach-yahrzeit">';
 		$html .= '<ul class="geshmak-luach-list">';
 		foreach ( $data['items'] as $item ) {
-			$html .= '<li class="geshmak-luach-item">';
+			// Expose which occurrence this is so milestone years can be styled
+			// (the number is already inside the title text Hebcal returns).
+			$anniv = ! empty( $item['anniversary'] ) ? ' data-anniversary="' . esc_attr( $item['anniversary'] ) . '"' : '';
+
+			$html .= '<li class="geshmak-luach-item"' . $anniv . '>';
 			if ( ! empty( $item['date'] ) ) {
 				$html .= '<span class="geshmak-luach-date">' . geshmak_luach_format_date( $item['date'] ) . '</span> ';
 			}

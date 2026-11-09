@@ -4,7 +4,7 @@ Donate link:
 Tags: hebcal, jewish calendar, zmanim, candle lighting, parsha, hebrew date, elementor
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -161,6 +161,15 @@ Yes. Every shortcode and Elementor surface accepts per-instance overrides (locat
 2. A candle-lighting shortcode rendered on the front end.
 
 == Changelog ==
+
+= 1.2.0 =
+
+* Changed: the Luach settings page now lives under the shared **Geshmak!** admin menu, labelled "Luach". If Geshmak! WordPress Essentials isn't active it still appears as its own top-level menu. The page address (`admin.php?page=geshmak-luach`) is unchanged.
+* New: the parsha surface now carries its special Shabbos — Zachor, Parah, HaChodesh, Shekalim, HaGadol, Shuva and the rest. Hebcal already returned it alongside the parsha and the plugin was discarding it. Shown by default on `[geshmak_luach_parsha]` and the Parsha atomic widget (turn off with `show_special="0"` or the new switch), and available as a new **Luach: Special Shabbos** Elementor dynamic tag that renders nothing on an ordinary week.
+* New: the Hebrew date is now also available pre-split into day, month and year (`hebrew_parts`), so each can be styled separately. Opt in with `show_parts="1"` on `[geshmak_luach_hebrew_date]` / `[geshmak_luach_convert]`, or the "Split day / month / year" switch on the Hebrew Date atomic widget. The default output is unchanged.
+* New: yahrzeit / birthday / anniversary items now expose which occurrence they are as a number, rendered as a `data-anniversary` attribute so milestone years can be styled.
+* New: the date converter reports whether the Hebrew year is a leap year (`is_leap_year`), plus a `geshmak_luach_is_hebrew_leap_year()` template tag. Computed locally from the Metonic cycle — no extra API call.
+* Reviewed the Hebcal MCP server (hebcal/hebcal-mcp) against this plugin: its seven tools are a subset of what the plugin already covers, so there is nothing to integrate. The improvements above came out of reading its source.
 
 = 1.1.0 =
 
