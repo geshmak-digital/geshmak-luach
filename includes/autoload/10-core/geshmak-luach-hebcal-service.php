@@ -93,6 +93,7 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 					'minchaKetana', 'plagHaMincha', 'sunset', 'tzeit7083deg',
 				),
 				'date_format'  => '', // PHP date() format; empty = site default.
+				'time_format'  => '', // PHP date() format for times; empty = site default.
 				'nekudos'      => 0,       // 1 = keep nekudos (vowel points) in Hebrew text.
 				'cache_ttl'    => 7 * DAY_IN_SECONDS,
 			);
@@ -1114,6 +1115,27 @@ if ( ! function_exists( 'geshmak_luach_is_hebrew_leap_year' ) ) {
 	}
 }
 
+if ( ! function_exists( 'geshmak_luach_format_overrides' ) ) {
+	/**
+	 * Get / set a temporary per-render override of the date and time formats
+	 * (used by the Luach Text atomic widget). Pass an array to set it, and
+	 * array( 'date' => '', 'time' => '' ) to clear it again.
+	 *
+	 * @param array|null $set Optional new override.
+	 * @return array { date, time } PHP date() formats; empty = no override.
+	 */
+	function geshmak_luach_format_overrides( $set = null ) {
+		static $overrides = array( 'date' => '', 'time' => '' );
+		if ( is_array( $set ) ) {
+			$overrides = array(
+				'date' => isset( $set['date'] ) ? (string) $set['date'] : '',
+				'time' => isset( $set['time'] ) ? (string) $set['time'] : '',
+			);
+		}
+		return $overrides;
+	}
+}
+
 if ( ! function_exists( 'geshmak_luach_format_iso_time' ) ) {
 	/**
 	 * Format a Hebcal ISO datetime as a localised time, honouring the UTC offset
@@ -1138,7 +1160,9 @@ if ( ! function_exists( 'geshmak_luach_format_iso_time' ) ) {
 			return '';
 		}
 		if ( '' === $format ) {
-			$format = get_option( 'time_format', 'g:i a' );
+			$ovr    = geshmak_luach_format_overrides();
+			$cfg    = $ovr['time'] ? $ovr['time'] : geshmak_luach_service()->get_setting( 'time_format' );
+			$format = $cfg ? $cfg : get_option( 'time_format', 'g:i a' );
 		}
 		return wp_date( $format, $dt->getTimestamp(), $dt->getTimezone() );
 	}
@@ -1163,7 +1187,8 @@ if ( ! function_exists( 'geshmak_luach_format_iso_date' ) ) {
 			return '';
 		}
 		if ( '' === $format ) {
-			$cfg    = geshmak_luach_service()->get_setting( 'date_format' );
+			$ovr    = geshmak_luach_format_overrides();
+			$cfg    = $ovr['date'] ? $ovr['date'] : geshmak_luach_service()->get_setting( 'date_format' );
 			$format = $cfg ? $cfg : get_option( 'date_format', 'F j, Y' );
 		}
 		return wp_date( $format, $dt->getTimestamp(), $dt->getTimezone() );

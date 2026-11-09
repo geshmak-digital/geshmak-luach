@@ -4,7 +4,7 @@ Donate link:
 Tags: hebcal, jewish calendar, zmanim, candle lighting, parsha, hebrew date, elementor
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.4.0
+Stable tag: 1.5.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -137,6 +137,7 @@ Search the V4 widget panel for "Luach" and drag any of these in. Each widget has
 * **Geshmak Luach Hebrew Date** — today's Hebrew date.
 * **Geshmak Luach Zmanim** — a zmanim table (with a *Show all available times* toggle; otherwise shows your configured default set).
 * **Geshmak Luach Today Panel** — a compact panel combining today's Hebrew date, the parsha and the next candle lighting.
+* **Geshmak Luach Text** — one plain text element showing any Luach calculation. Choose the HTML tag (P, DIV, H1–H6 or SPAN), pick what to show (parsha, parsha with Torah / Haftarah, special Shabbos, candle lighting, havdalah, both, Hebrew date, Gregorian date, next holiday, upcoming holidays, molad, a single zman, the zmanim list, or whether melacha is forbidden now), and override location (GeoNames ID), Israel / Diaspora schedule, candle-lighting minutes, havdalah method, transliteration, date format and time format for just that widget. It outputs plain text with no markup of its own, so the Style tab controls its typography, colour and spacing completely.
 
 = Theme template tags (for developers) =
 
@@ -162,6 +163,11 @@ Yes. Every shortcode and Elementor surface accepts per-instance overrides (locat
 2. A candle-lighting shortcode rendered on the front end.
 
 == Changelog ==
+
+= 1.5.0 =
+
+* New: **Time format** setting (Luach > Display), next to Date format. Blank uses the site time format.
+* New: **Geshmak Luach Text** atomic widget — any calculation as plain text in a tag of your choice (P, DIV, H1–H6, SPAN), with per-widget overrides for location, Israel / Diaspora, candle-lighting offset, havdalah method, transliteration, date format and time format. Fully styleable from the Style tab.
 
 = 1.4.0 =
 

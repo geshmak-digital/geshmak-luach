@@ -407,6 +407,347 @@ if ( ! function_exists( 'geshmak_luach_define_atomic_widgets' ) ) {
 			}
 		}
 
+		// -------------------------------------------------------------------
+		// LUACH TEXT — one text widget, any calculation, any tag
+		// -------------------------------------------------------------------
+
+		/**
+		 * A single text element (p / div / h1–h6 / span) that shows one chosen Luach
+		 * calculation as plain text, with per-widget overrides for location, schedule,
+		 * candle lighting, havdalah, transliteration, date format and time format.
+		 * Output carries no markup of its own, so the Style tab (typography, colour,
+		 * spacing…) fully controls it.
+		 */
+		class Geshmak_Luach_Atomic_Text extends Geshmak_Luach_Atomic_Base {
+
+			/** Allowed element tags. */
+			const TAGS = array( 'p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span' );
+
+			public static function get_element_type(): string {
+				return 'geshmak-luach-text';
+			}
+
+			public function get_title(): string {
+				return __( 'Geshmak Luach Text', 'geshmak-luach' );
+			}
+
+			/**
+			 * Menu of calculations: value => label.
+			 *
+			 * @return array
+			 */
+			public static function calculations(): array {
+				return array(
+					'parsha'           => __( 'Parsha', 'geshmak-luach' ),
+					'parsha_leyning'   => __( 'Parsha with Torah / Haftarah', 'geshmak-luach' ),
+					'special_shabbos'  => __( 'Special Shabbos', 'geshmak-luach' ),
+					'candles'          => __( 'Candle lighting time', 'geshmak-luach' ),
+					'havdalah'         => __( 'Havdalah time', 'geshmak-luach' ),
+					'shabbos_times'    => __( 'Candle lighting and havdalah', 'geshmak-luach' ),
+					'hebrew_date'      => __( 'Hebrew date (today)', 'geshmak-luach' ),
+					'gregorian_date'   => __( 'Gregorian date (today)', 'geshmak-luach' ),
+					'next_holiday'     => __( 'Next holiday', 'geshmak-luach' ),
+					'upcoming_holidays' => __( 'Upcoming holidays (next 5)', 'geshmak-luach' ),
+					'molad'            => __( 'Next molad', 'geshmak-luach' ),
+					'zman'             => __( 'A single zman (choose below)', 'geshmak-luach' ),
+					'zmanim'           => __( 'Zmanim (default set)', 'geshmak-luach' ),
+					'assur_melacha'    => __( 'Is melacha forbidden now?', 'geshmak-luach' ),
+				);
+			}
+
+			/**
+			 * Turn an associative array into Select_Control option rows.
+			 *
+			 * @param array $options value => label.
+			 * @return array
+			 */
+			protected static function select_options( $options ): array {
+				$rows = array();
+				foreach ( $options as $value => $label ) {
+					$rows[] = array( 'value' => (string) $value, 'label' => $label );
+				}
+				return $rows;
+			}
+
+			protected static function define_props_schema(): array {
+				$parent = parent::define_props_schema();
+
+				return array_merge(
+					$parent,
+					array(
+						'tag'           => String_Prop_Type::make()->default( 'p' )->enum( self::TAGS ),
+						'calculation'   => String_Prop_Type::make()->default( 'parsha' )->enum( array_keys( self::calculations() ) ),
+						'zman'          => String_Prop_Type::make()->default( 'sunset' )->enum( array_keys( geshmak_luach_zman_labels() ) ),
+						'israel'        => String_Prop_Type::make()->default( '' )->enum( array( '', 'diaspora', 'israel' ) ),
+						'candle_mins'   => String_Prop_Type::make()->default( '' ),
+						'havdalah_mode' => String_Prop_Type::make()->default( '' )->enum( array( '', 'tzeit', 'mins' ) ),
+						'havdalah_mins' => String_Prop_Type::make()->default( '' ),
+						'date_format'   => String_Prop_Type::make()->default( '' ),
+						'time_format'   => String_Prop_Type::make()->default( '' ),
+					)
+				);
+			}
+
+			protected function define_atomic_controls(): array {
+				$tag_options = array();
+				foreach ( self::TAGS as $tag ) {
+					$tag_options[ $tag ] = strtoupper( $tag );
+				}
+
+				$controls = array(
+					Section::make()
+						->set_label( __( 'Content', 'geshmak-luach' ) )
+						->set_items(
+							array(
+								Select_Control::bind_to( 'tag' )
+									->set_label( __( 'HTML tag', 'geshmak-luach' ) )
+									->set_options( self::select_options( $tag_options ) ),
+								Select_Control::bind_to( 'calculation' )
+									->set_label( __( 'Show', 'geshmak-luach' ) )
+									->set_options( self::select_options( self::calculations() ) ),
+								Select_Control::bind_to( 'zman' )
+									->set_label( __( 'Zman (when "A single zman" is chosen)', 'geshmak-luach' ) )
+									->set_options( self::select_options( geshmak_luach_zman_labels() ) ),
+							)
+						),
+				);
+
+				// Shared Luach section: location, transliteration, Hebrew, credit.
+				$controls = array_merge( $controls, parent::define_atomic_controls() );
+
+				$controls[] = Section::make()
+					->set_label( __( 'Luach overrides', 'geshmak-luach' ) )
+					->set_items(
+						array(
+							Select_Control::bind_to( 'israel' )
+								->set_label( __( 'Schedule', 'geshmak-luach' ) )
+								->set_options(
+									self::select_options(
+										array(
+											''         => __( 'Site default', 'geshmak-luach' ),
+											'diaspora' => __( 'Diaspora', 'geshmak-luach' ),
+											'israel'   => __( 'Israel', 'geshmak-luach' ),
+										)
+									)
+								),
+							Text_Control::bind_to( 'candle_mins' )
+								->set_label( __( 'Candle lighting: minutes before sunset', 'geshmak-luach' ) ),
+							Select_Control::bind_to( 'havdalah_mode' )
+								->set_label( __( 'Havdalah', 'geshmak-luach' ) )
+								->set_options(
+									self::select_options(
+										array(
+											''      => __( 'Site default', 'geshmak-luach' ),
+											'tzeit' => __( 'Nightfall (3 small stars)', 'geshmak-luach' ),
+											'mins'  => __( 'Fixed minutes after sunset', 'geshmak-luach' ),
+										)
+									)
+								),
+							Text_Control::bind_to( 'havdalah_mins' )
+								->set_label( __( 'Havdalah: minutes after sunset', 'geshmak-luach' ) ),
+							Text_Control::bind_to( 'date_format' )
+								->set_label( __( 'Date format (PHP, e.g. j F Y)', 'geshmak-luach' ) ),
+							Text_Control::bind_to( 'time_format' )
+								->set_label( __( 'Time format (PHP, e.g. g:i a)', 'geshmak-luach' ) ),
+						)
+					);
+
+				return $controls;
+			}
+
+			/**
+			 * Service args including the schedule / candle / havdalah overrides.
+			 *
+			 * @param array $settings Resolved settings.
+			 * @return array
+			 */
+			protected function service_args( $settings ): array {
+				$args = parent::service_args( $settings );
+
+				if ( ! empty( $settings['israel'] ) ) {
+					$args['israel'] = ( 'israel' === $settings['israel'] ) ? 1 : 0;
+				}
+				if ( isset( $settings['candle_mins'] ) && '' !== trim( (string) $settings['candle_mins'] ) && is_numeric( $settings['candle_mins'] ) ) {
+					$args['b'] = absint( $settings['candle_mins'] );
+				}
+				if ( ! empty( $settings['havdalah_mode'] ) ) {
+					$args['havdalah_mode'] = $settings['havdalah_mode'];
+				}
+				if ( isset( $settings['havdalah_mins'] ) && '' !== trim( (string) $settings['havdalah_mins'] ) && is_numeric( $settings['havdalah_mins'] ) ) {
+					$args['havdalah_mins'] = absint( $settings['havdalah_mins'] );
+				}
+				return $args;
+			}
+
+			/**
+			 * Hebrew run, bidi-isolated, no styling.
+			 *
+			 * @param string $hebrew Hebrew text.
+			 * @return string Escaped HTML.
+			 */
+			protected function hebrew_run( $hebrew ): string {
+				$hebrew = trim( (string) $hebrew );
+				return '' === $hebrew ? '' : '<bdi dir="rtl" lang="he">' . esc_html( $hebrew ) . '</bdi>';
+			}
+
+			/**
+			 * "Title Hebrew" for a normalised item.
+			 *
+			 * @param array $item      Item with title / hebrew.
+			 * @param bool  $show_he   Include the Hebrew.
+			 * @return string Escaped HTML.
+			 */
+			protected function item_text( $item, $show_he ): string {
+				if ( empty( $item['title'] ) ) {
+					return '';
+				}
+				$out = esc_html( $item['title'] );
+				if ( $show_he && ! empty( $item['hebrew'] ) && $item['hebrew'] !== $item['title'] ) {
+					$out .= ' ' . $this->hebrew_run( $item['hebrew'] );
+				}
+				return $out;
+			}
+
+			/**
+			 * Flatten a structured renderer's markup to plain inline text.
+			 *
+			 * @param string $html Renderer output.
+			 * @return string
+			 */
+			protected function flatten( $html ): string {
+				return function_exists( 'geshmak_luach_plain_text' ) ? geshmak_luach_plain_text( $html ) : wp_strip_all_tags( $html );
+			}
+
+			/**
+			 * Build the text (escaped HTML) for the chosen calculation.
+			 *
+			 * @param array $settings Resolved settings.
+			 * @return string
+			 */
+			protected function build_text( $settings ): string {
+				$service = geshmak_luach_service();
+				$args    = $this->service_args( $settings );
+				$show_he = ! empty( $settings['show_hebrew'] );
+				$display = array(
+					'show_hebrew' => $show_he,
+					'show_credit' => false, // credit (if wanted) is appended once, in render().
+				);
+				$calc    = isset( $settings['calculation'] ) ? $settings['calculation'] : 'parsha';
+
+				switch ( $calc ) {
+
+					case 'parsha':
+						$data = $service->get_parsha( $args );
+						return empty( $data['items'][0] ) ? '' : $this->item_text( $data['items'][0], $show_he );
+
+					case 'parsha_leyning':
+						$args['leyning'] = true;
+						$data            = $service->get_parsha( $args );
+						return $this->flatten( geshmak_luach_render_parsha( $data, array_merge( $display, array( 'show_leyning' => true, 'show_special' => false ) ) ) );
+
+					case 'special_shabbos':
+						$data = $service->get_parsha( $args );
+						return empty( $data['items'][0]['special'] ) ? '' : $this->item_text( $data['items'][0]['special'], $show_he );
+
+					case 'candles':
+					case 'havdalah':
+						$data = $service->get_candle_times( $args );
+						foreach ( (array) ( isset( $data['items'] ) ? $data['items'] : array() ) as $item ) {
+							if ( $calc === $item['category'] ) {
+								return $item['time'] ? esc_html( $item['time'] ) : geshmak_luach_format_time( $item['date'] );
+							}
+						}
+						return '';
+
+					case 'shabbos_times':
+						return $this->flatten( geshmak_luach_render_candles( $service->get_candle_times( $args ), $display ) );
+
+					case 'hebrew_date':
+						$data = $service->get_hebrew_date( $args );
+						if ( empty( $data['display'] ) && empty( $data['hebrew'] ) ) {
+							return '';
+						}
+						$out = ! empty( $data['display'] ) ? esc_html( $data['display'] ) : '';
+						if ( $show_he && ! empty( $data['hebrew'] ) ) {
+							$out .= ' ' . $this->hebrew_run( $data['hebrew'] );
+						}
+						return trim( $out );
+
+					case 'gregorian_date':
+						return geshmak_luach_format_date( current_time( 'Y-m-d' ) );
+
+					case 'next_holiday':
+						$args['upcoming'] = true;
+						$args['limit']    = 1;
+						$data             = $service->get_holidays( $args );
+						return empty( $data['items'][0] ) ? '' : $this->item_text( $data['items'][0], $show_he );
+
+					case 'upcoming_holidays':
+						$args['upcoming'] = true;
+						$args['limit']    = 5;
+						return $this->flatten( geshmak_luach_render_holidays( $service->get_holidays( $args ), $display ) );
+
+					case 'molad':
+						$args['molad']    = true;
+						$args['upcoming'] = true;
+						$args['limit']    = 1;
+						$data             = $service->get_holidays( $args );
+						return empty( $data['items'][0]['title'] ) ? '' : esc_html( $data['items'][0]['title'] );
+
+					case 'zman':
+						$key           = ! empty( $settings['zman'] ) ? $settings['zman'] : 'sunset';
+						$args['times'] = array( $key );
+						$data          = $service->get_zmanim( $args );
+						return empty( $data['times'][ $key ]['time'] ) ? '' : geshmak_luach_format_time( $data['times'][ $key ]['time'] );
+
+					case 'zmanim':
+						return $this->flatten( geshmak_luach_render_zmanim( $service->get_zmanim( $args ), $display ) );
+
+					case 'assur_melacha':
+						return $this->flatten( geshmak_luach_render_assur( $service->get_assur_melacha( $args ), $display ) );
+				}
+
+				return '';
+			}
+
+			protected function render(): void {
+				$settings = $this->get_atomic_settings();
+
+				// Per-widget date / time format, applied only while this widget renders.
+				geshmak_luach_format_overrides(
+					array(
+						'date' => isset( $settings['date_format'] ) ? sanitize_text_field( $settings['date_format'] ) : '',
+						'time' => isset( $settings['time_format'] ) ? sanitize_text_field( $settings['time_format'] ) : '',
+					)
+				);
+				try {
+					$text = $this->build_text( $settings );
+				} catch ( \Throwable $e ) {
+					$text = '';
+				}
+				geshmak_luach_format_overrides( array( 'date' => '', 'time' => '' ) );
+
+				if ( ! empty( $settings['show_credit'] ) && '' !== $text ) {
+					$text .= ' ' . geshmak_luach_attribution_html( array(), true );
+				}
+
+				$tag = isset( $settings['tag'] ) ? strtolower( (string) $settings['tag'] ) : 'p';
+				$tag = in_array( $tag, self::TAGS, true ) ? $tag : 'p';
+
+				$cssid   = isset( $settings['_cssid'] ) ? $settings['_cssid'] : '';
+				$cssid   = is_array( $cssid ) ? implode( ' ', $cssid ) : (string) $cssid;
+				$classes = isset( $settings['classes'] ) ? $settings['classes'] : '';
+				$classes = is_array( $classes ) ? implode( ' ', $classes ) : (string) $classes;
+				$id_attr = '' !== $cssid ? ' id="' . esc_attr( $cssid ) . '"' : '';
+
+				echo '<' . $tag . $id_attr // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — $tag is whitelisted.
+					. ' class="' . esc_attr( trim( 'geshmak-luach-text ' . $classes ) ) . '"'
+					. ' data-interaction-id="' . esc_attr( $this->get_id() ) . '">'
+					. $text // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped — built from escaping helpers.
+					. '</' . $tag . '>';
+			}
+		}
+
 		// Register on the widgets hook (fires after elementor/init).
 		add_action( 'elementor/widgets/register', 'geshmak_luach_register_atomic_widgets' );
 	}
@@ -431,6 +772,7 @@ if ( ! function_exists( 'geshmak_luach_register_atomic_widgets' ) ) {
 			'Geshmak_Luach_Atomic_Hebrew_Date',
 			'Geshmak_Luach_Atomic_Zmanim',
 			'Geshmak_Luach_Atomic_Today',
+			'Geshmak_Luach_Atomic_Text',
 		);
 
 		foreach ( $widgets as $widget ) {

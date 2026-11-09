@@ -114,6 +114,7 @@ if ( ! function_exists( 'geshmak_luach_register_settings' ) ) {
 		add_settings_field( 'nekudos', __( 'Nekudos', 'geshmak-luach' ), 'geshmak_luach_field_nekudos', GESHMAK_LUACH_SETTINGS_SLUG, 'geshmak_luach_display' );
 		add_settings_field( 'zmanim_keys', __( 'Default zmanim shown', 'geshmak-luach' ), 'geshmak_luach_field_zmanim_keys', GESHMAK_LUACH_SETTINGS_SLUG, 'geshmak_luach_display' );
 		add_settings_field( 'date_format', __( 'Date format', 'geshmak-luach' ), 'geshmak_luach_field_date_format', GESHMAK_LUACH_SETTINGS_SLUG, 'geshmak_luach_display' );
+		add_settings_field( 'time_format', __( 'Time format', 'geshmak-luach' ), 'geshmak_luach_field_time_format', GESHMAK_LUACH_SETTINGS_SLUG, 'geshmak_luach_display' );
 
 		// --- Cache -------------------------------------------------------------
 		add_settings_section( 'geshmak_luach_cache', __( 'Cache', 'geshmak-luach' ), '__return_false', GESHMAK_LUACH_SETTINGS_SLUG );
@@ -168,7 +169,8 @@ if ( ! function_exists( 'geshmak_luach_sanitize_settings' ) ) {
 		}
 
 		$out['nekudos']     = empty( $input['nekudos'] ) ? 0 : 1;
-		$out['date_format'] =isset( $input['date_format'] ) ? sanitize_text_field( $input['date_format'] ) : '';
+		$out['date_format'] = isset( $input['date_format'] ) ? sanitize_text_field( $input['date_format'] ) : '';
+		$out['time_format'] = isset( $input['time_format'] ) ? sanitize_text_field( $input['time_format'] ) : '';
 		$out['cache_ttl']   = isset( $input['cache_ttl'] ) ? max( MINUTE_IN_SECONDS, absint( $input['cache_ttl'] ) ) : $defaults['cache_ttl'];
 
 		// Drop the in-memory settings cache so the next request reads fresh values.
@@ -372,6 +374,19 @@ if ( ! function_exists( 'geshmak_luach_field_date_format' ) ) {
 			esc_attr( get_option( 'date_format', 'F j, Y' ) )
 		);
 		echo '<p class="description">' . esc_html__( 'PHP date() format for Gregorian dates. Leave blank to use the site default.', 'geshmak-luach' ) . '</p>';
+	}
+}
+
+if ( ! function_exists( 'geshmak_luach_field_time_format' ) ) {
+	function geshmak_luach_field_time_format() {
+		$val = geshmak_luach_get_opt( 'time_format' );
+		printf(
+			'<input type="text" name="%1$s[time_format]" value="%2$s" placeholder="%3$s" class="regular-text" />',
+			esc_attr( GESHMAK_LUACH_OPTION ),
+			esc_attr( $val ),
+			esc_attr( get_option( 'time_format', 'g:i a' ) )
+		);
+		echo '<p class="description">' . esc_html__( 'PHP date() format for times, e.g. g:i a (6:05 pm), g:i A (6:05 PM), H:i (18:05). Leave blank to use the site default.', 'geshmak-luach' ) . '</p>';
 	}
 }
 
