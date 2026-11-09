@@ -58,12 +58,77 @@ if ( ! function_exists( 'geshmak_luach_display_atts' ) ) {
 	function geshmak_luach_display_atts( $atts ) {
 		return array(
 			'show_hebrew'  => isset( $atts['show_hebrew'] ) ? $atts['show_hebrew'] : '1',
-			'show_credit'  => isset( $atts['show_credit'] ) ? $atts['show_credit'] : '1',
+			'show_credit'  => isset( $atts['show_credit'] ) ? $atts['show_credit'] : '0',
 			'show_leyning' => isset( $atts['show_leyning'] ) ? $atts['show_leyning'] : '0',
 			// Special Shabbos alongside the parsha — on by default.
 			'show_special' => isset( $atts['show_special'] ) ? $atts['show_special'] : '1',
 			// Hebrew date split into styleable day / month / year spans — opt in.
 			'show_parts'   => isset( $atts['show_parts'] ) ? $atts['show_parts'] : '0',
+		);
+	}
+}
+
+// ---------------------------------------------------------------------------
+// PLAIN-TEXT OUTPUT
+//
+// By default every shortcode returns plain inline text (no wrapper element, no
+// classes), so it simply takes on the formatting of whatever it is placed in.
+// Hebrew is wrapped in a bare <bdi dir="rtl"> so it still displays right-to-left
+// without picking up any styling. Add format="html" (or show_parts="1") to get
+// the structured, classed markup instead.
+// ---------------------------------------------------------------------------
+
+if ( ! function_exists( 'geshmak_luach_plain_text' ) ) {
+	/**
+	 * Flatten the structured Luach markup to plain inline text.
+	 *
+	 * @param string $html Markup produced by a renderer.
+	 * @return string
+	 */
+	function geshmak_luach_plain_text( $html ) {
+		$html = (string) $html;
+
+		// Day / month / year part spans → just their text.
+		$html = preg_replace( '#<span class="geshmak-luach-he-[dmy]">(.*?)</span>#s', '$1', $html );
+		// Hebrew → bare bidi-isolated run.
+		$html = preg_replace( '#<span dir="rtl" lang="he"[^>]*>(.*?)</span>#s', '<bdi dir="rtl" lang="he">$1</bdi>', $html );
+		// Credit (when asked for) on its own line, link kept.
+		$html = preg_replace( '#<small class="geshmak-luach-credit">(.*?)</small>#s', '<br>$1', $html );
+		// Structure → line breaks / spaces.
+		$html = preg_replace( '#</(li|tr|p|div|h[1-6]|table|ul|ol)>#i', '<br>', $html );
+		$html = preg_replace( '#</(td|th)>#i', ' ', $html );
+
+		$html = strip_tags( $html, '<a><bdi><br>' );
+
+		$html = preg_replace( '/\s+/', ' ', $html );
+		$html = preg_replace( '#\s*(<br\s*/?>\s*)+#i', '<br>', $html );
+		$html = preg_replace( '#^(\s|<br>)+|(\s|<br>)+$#i', '', $html );
+
+		return $html;
+	}
+}
+
+if ( ! function_exists( 'geshmak_luach_add_shortcode' ) ) {
+	/**
+	 * Register a Luach shortcode whose output is plain text unless the author
+	 * asks for format="html" (or show_parts="1", which needs the styled spans).
+	 *
+	 * @param string   $tag      Shortcode tag.
+	 * @param callable $callback Renderer callback (returns structured HTML).
+	 * @return void
+	 */
+	function geshmak_luach_add_shortcode( $tag, $callback ) {
+		add_shortcode(
+			$tag,
+			function ( $atts, $content = '', $shortcode_tag = '' ) use ( $callback ) {
+				$atts   = is_array( $atts ) ? $atts : array();
+				$output = call_user_func( $callback, $atts, $content, $shortcode_tag );
+
+				$format = isset( $atts['format'] ) ? strtolower( (string) $atts['format'] ) : 'plain';
+				$parts  = isset( $atts['show_parts'] ) && geshmak_luach_to_bool( $atts['show_parts'] );
+
+				return ( 'html' === $format || $parts ) ? $output : geshmak_luach_plain_text( $output );
+			}
 		);
 	}
 }
@@ -80,7 +145,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_candles' ) ) {
 				'tzid'          => '', 'translit' => '', 'i' => '', 'israel' => '',
 				'b'             => '', 'havdalah_mode' => '', 'havdalah_mins' => '',
 				'year'          => '', 'month' => '', 'start' => '', 'end' => '',
-				'show_hebrew'   => '1', 'show_credit' => '1',
+				'show_hebrew'   => '1', 'show_credit' => '0',
 			),
 			$atts,
 			'geshmak_luach_candles'
@@ -96,7 +161,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_candles' ) ) {
 		return geshmak_luach_render_candles( geshmak_luach_service()->get_candle_times( $args ), geshmak_luach_display_atts( $atts ) );
 	}
 }
-add_shortcode( 'geshmak_luach_candles', 'geshmak_luach_shortcode_candles' );
+geshmak_luach_add_shortcode( 'geshmak_luach_candles', 'geshmak_luach_shortcode_candles' );
 
 // ---------------------------------------------------------------------------
 // PARSHA
@@ -109,7 +174,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_parsha' ) ) {
 				'geonameid'   => '', 'location' => '', 'latitude' => '', 'longitude' => '', 'tzid' => '',
 				'translit'    => '', 'i' => '', 'israel' => '',
 				'year'        => '', 'month' => '', 'start' => '', 'end' => '',
-				'leyning'     => '0', 'show_leyning' => '', 'show_hebrew' => '1', 'show_credit' => '1',
+				'leyning'     => '0', 'show_leyning' => '', 'show_hebrew' => '1', 'show_credit' => '0',
 				'show_special' => '1',
 			),
 			$atts,
@@ -131,7 +196,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_parsha' ) ) {
 		return geshmak_luach_render_parsha( geshmak_luach_service()->get_parsha( $args ), $display );
 	}
 }
-add_shortcode( 'geshmak_luach_parsha', 'geshmak_luach_shortcode_parsha' );
+geshmak_luach_add_shortcode( 'geshmak_luach_parsha', 'geshmak_luach_shortcode_parsha' );
 
 // ---------------------------------------------------------------------------
 // ZMANIM
@@ -144,7 +209,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_zmanim' ) ) {
 				'geonameid' => '', 'location' => '', 'latitude' => '', 'longitude' => '', 'tzid' => '',
 				'elevation' => '', 'translit' => '',
 				'date'      => '', 'start' => '', 'end' => '', 'times' => '', 'all' => '',
-				'show_credit' => '1',
+				'show_credit' => '0',
 			),
 			$atts,
 			'geshmak_luach_zmanim'
@@ -160,7 +225,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_zmanim' ) ) {
 		return geshmak_luach_render_zmanim( geshmak_luach_service()->get_zmanim( $args ), geshmak_luach_display_atts( $atts ) );
 	}
 }
-add_shortcode( 'geshmak_luach_zmanim', 'geshmak_luach_shortcode_zmanim' );
+geshmak_luach_add_shortcode( 'geshmak_luach_zmanim', 'geshmak_luach_shortcode_zmanim' );
 
 // ---------------------------------------------------------------------------
 // HEBREW DATE
@@ -191,7 +256,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_hebrew_date' ) ) {
 		return geshmak_luach_render_hebrew_date( geshmak_luach_service()->get_hebrew_date( $args ), geshmak_luach_display_atts( $atts ) );
 	}
 }
-add_shortcode( 'geshmak_luach_hebrew_date', 'geshmak_luach_shortcode_hebrew_date' );
+geshmak_luach_add_shortcode( 'geshmak_luach_hebrew_date', 'geshmak_luach_shortcode_hebrew_date' );
 
 // ---------------------------------------------------------------------------
 // DATE CONVERTER (g2h / h2g)
@@ -220,7 +285,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_convert' ) ) {
 		return geshmak_luach_render_hebrew_date( geshmak_luach_service()->convert_date( $args ), geshmak_luach_display_atts( $atts ) );
 	}
 }
-add_shortcode( 'geshmak_luach_convert', 'geshmak_luach_shortcode_convert' );
+geshmak_luach_add_shortcode( 'geshmak_luach_convert', 'geshmak_luach_shortcode_convert' );
 
 // ---------------------------------------------------------------------------
 // HOLIDAYS
@@ -236,7 +301,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_holidays' ) ) {
 				'major'     => '', 'minor' => '', 'modern' => '', 'roshchodesh' => '', 'fasts' => '',
 				'special'   => '', 'omer' => '', 'molad' => '', 'dafyomi' => '',
 				'mishnayomi' => '', 'yerushalmi' => '', 'nachyomi' => '', 'learning' => '',
-				'upcoming'  => '', 'limit' => '', 'show_hebrew' => '1', 'show_credit' => '1',
+				'upcoming'  => '', 'limit' => '', 'show_hebrew' => '1', 'show_credit' => '0',
 			),
 			$atts,
 			'geshmak_luach_holidays'
@@ -255,7 +320,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_holidays' ) ) {
 		return geshmak_luach_render_holidays( geshmak_luach_service()->get_holidays( $args ), geshmak_luach_display_atts( $atts ) );
 	}
 }
-add_shortcode( 'geshmak_luach_holidays', 'geshmak_luach_shortcode_holidays' );
+geshmak_luach_add_shortcode( 'geshmak_luach_holidays', 'geshmak_luach_shortcode_holidays' );
 
 // ---------------------------------------------------------------------------
 // LEYNING
@@ -267,7 +332,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_leyning' ) ) {
 			array(
 				'translit'  => '', 'i' => '', 'israel' => '',
 				'year'      => '', 'month' => '', 'start' => '', 'end' => '',
-				'triennial' => '', 'weekday' => '', 'show_hebrew' => '1', 'show_credit' => '1',
+				'triennial' => '', 'weekday' => '', 'show_hebrew' => '1', 'show_credit' => '0',
 			),
 			$atts,
 			'geshmak_luach_leyning'
@@ -283,7 +348,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_leyning' ) ) {
 		return geshmak_luach_render_leyning( geshmak_luach_service()->get_leyning( $args ), geshmak_luach_display_atts( $atts ) );
 	}
 }
-add_shortcode( 'geshmak_luach_leyning', 'geshmak_luach_shortcode_leyning' );
+geshmak_luach_add_shortcode( 'geshmak_luach_leyning', 'geshmak_luach_shortcode_leyning' );
 
 // ---------------------------------------------------------------------------
 // YAHRZEIT / HEBREW BIRTHDAY / ANNIVERSARY
@@ -296,7 +361,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_yahrzeit' ) ) {
 				'type'        => 'Yahrzeit', 'name' => '', 'date' => '',
 				'gy'          => '', 'gm' => '', 'gd' => '',
 				'after_sunset' => '', 'years' => '', 'translit' => '',
-				'show_hebrew' => '1', 'show_credit' => '1',
+				'show_hebrew' => '1', 'show_credit' => '0',
 			),
 			$atts,
 			'geshmak_luach_yahrzeit'
@@ -312,7 +377,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_yahrzeit' ) ) {
 		return geshmak_luach_render_yahrzeit( geshmak_luach_service()->get_yahrzeit( $args ), geshmak_luach_display_atts( $atts ) );
 	}
 }
-add_shortcode( 'geshmak_luach_yahrzeit', 'geshmak_luach_shortcode_yahrzeit' );
+geshmak_luach_add_shortcode( 'geshmak_luach_yahrzeit', 'geshmak_luach_shortcode_yahrzeit' );
 
 // ---------------------------------------------------------------------------
 // ASSUR MELACHA (WORK FORBIDDEN)
@@ -323,7 +388,7 @@ if ( ! function_exists( 'geshmak_luach_shortcode_assur_melacha' ) ) {
 		$atts = shortcode_atts(
 			array(
 				'geonameid' => '', 'location' => '', 'latitude' => '', 'longitude' => '', 'tzid' => '',
-				'elevation' => '', 'datetime' => '', 'show_credit' => '1',
+				'elevation' => '', 'datetime' => '', 'show_credit' => '0',
 			),
 			$atts,
 			'geshmak_luach_assur_melacha'
@@ -339,4 +404,4 @@ if ( ! function_exists( 'geshmak_luach_shortcode_assur_melacha' ) ) {
 		return geshmak_luach_render_assur( geshmak_luach_service()->get_assur_melacha( $args ), geshmak_luach_display_atts( $atts ) );
 	}
 }
-add_shortcode( 'geshmak_luach_assur_melacha', 'geshmak_luach_shortcode_assur_melacha' );
+geshmak_luach_add_shortcode( 'geshmak_luach_assur_melacha', 'geshmak_luach_shortcode_assur_melacha' );

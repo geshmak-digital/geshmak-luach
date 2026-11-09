@@ -93,8 +93,27 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 					'minchaKetana', 'plagHaMincha', 'sunset', 'tzeit7083deg',
 				),
 				'date_format'  => '', // PHP date() format; empty = site default.
+				'nekudos'      => 0,       // 1 = keep nekudos (vowel points) in Hebrew text.
 				'cache_ttl'    => 7 * DAY_IN_SECONDS,
 			);
+		}
+
+		/**
+		 * Apply the site-wide nekudos setting to a Hebrew string. Hebcal returns
+		 * some Hebrew pointed (e.g. month names); unless the "Use nekudos" setting
+		 * is on, the vowel points and cantillation marks are stripped. Maqaf, sof
+		 * pasuq and geresh/gershayim (used in dates) are kept.
+		 *
+		 * @param string $hebrew Hebrew text as returned by Hebcal.
+		 * @return string
+		 */
+		public function hebrew_text( $hebrew ) {
+			$hebrew = (string) $hebrew;
+			if ( '' === $hebrew || $this->get_setting( 'nekudos', 0 ) ) {
+				return $hebrew;
+			}
+			$stripped = preg_replace( '/[\x{0591}-\x{05BD}\x{05BF}\x{05C1}\x{05C2}\x{05C4}\x{05C5}\x{05C7}]/u', '', $hebrew );
+			return null === $stripped ? $hebrew : $stripped;
 		}
 
 		/**
@@ -471,7 +490,7 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 		 */
 		protected function normalize_event( $item, $scheme ) {
 			$title  = isset( $item['title'] ) ? $item['title'] : '';
-			$hebrew = isset( $item['hebrew'] ) ? $item['hebrew'] : '';
+			$hebrew = $this->hebrew_text( isset( $item['hebrew'] ) ? $item['hebrew'] : '' );
 
 			return array(
 				'title'    => geshmak_luach_transliterate( $title, $scheme, $hebrew ),
@@ -725,7 +744,7 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 			$items  = array();
 			foreach ( (array) ( isset( $data['items'] ) ? $data['items'] : array() ) as $item ) {
 				$name              = isset( $item['name']['en'] ) ? $item['name']['en'] : ( isset( $item['name'] ) ? $item['name'] : '' );
-				$hebrew            = isset( $item['name']['he'] ) ? $item['name']['he'] : '';
+				$hebrew            = $this->hebrew_text( isset( $item['name']['he'] ) ? $item['name']['he'] : '' );
 				$items[] = array(
 					'title'    => geshmak_luach_transliterate( $name, $scheme, $hebrew ),
 					'title_en' => $name,
@@ -854,7 +873,7 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 			}
 
 			$scheme = $this->resolve_translit( $args );
-			$hebrew = isset( $data['hebrew'] ) ? $data['hebrew'] : '';
+			$hebrew = $this->hebrew_text( isset( $data['hebrew'] ) ? $data['hebrew'] : '' );
 			$en     = isset( $data['hy'], $data['hm'], $data['hd'] ) ? trim( $data['hd'] . ' ' . $data['hm'] . ' ' . $data['hy'] ) : '';
 
 			// Hebcal also returns the Hebrew date pre-split into its parts
@@ -864,7 +883,7 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 			if ( isset( $data['heDateParts'] ) && is_array( $data['heDateParts'] ) ) {
 				foreach ( array( 'y', 'm', 'd' ) as $part ) {
 					if ( isset( $data['heDateParts'][ $part ] ) ) {
-						$parts[ $part ] = (string) $data['heDateParts'][ $part ];
+						$parts[ $part ] = $this->hebrew_text( (string) $data['heDateParts'][ $part ] );
 					}
 				}
 			}
@@ -937,7 +956,7 @@ if ( ! class_exists( 'Geshmak_Luach_Hebcal_Service' ) ) {
 			$items  = array();
 			foreach ( (array) ( isset( $data['items'] ) ? $data['items'] : array() ) as $item ) {
 				$title   = isset( $item['title'] ) ? $item['title'] : '';
-				$hebrew  = isset( $item['hebrew'] ) ? $item['hebrew'] : '';
+				$hebrew  = $this->hebrew_text( isset( $item['hebrew'] ) ? $item['hebrew'] : '' );
 				// The yahrzeit API returns the Hebrew date as a transliterated string
 				// (e.g. "18 Adar 5786") in `hdate`, not Hebrew script — remap it too.
 				$hdate   = isset( $item['hdate'] ) ? $item['hdate'] : '';

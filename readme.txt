@@ -4,7 +4,7 @@ Donate link:
 Tags: hebcal, jewish calendar, zmanim, candle lighting, parsha, hebrew date, elementor
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -70,7 +70,8 @@ Set your site-wide defaults once under the **Luach** admin menu (location, Diasp
 * `israel` (or `i`) — `1` for the Israel schedule, `0` for Diaspora.
 * `translit` — `ashkenaz` (Modern Ashkenaz), `sephardi` (Hebcal default), or `hebrew` (Hebrew only).
 * `show_hebrew` — `1`/`0`, show the Hebrew text alongside the transliteration (default `1`).
-* `show_credit` — `1`/`0`, show the small Hebcal attribution (default `1`, except date shortcodes).
+* `show_credit` — `1`/`0`, show the small Hebcal attribution (default `0`).
+* `format` — `plain` (default) returns plain inline text with no wrapper or styling, so it takes on the formatting of whatever it sits in (Hebrew is wrapped in a bare right-to-left `bdi`). `html` returns the structured, classed markup (lists, tables, styling hooks). `show_parts="1"` also returns the structured markup.
 
 Date-range options (where supported): `year` (e.g. `2026` or `now`), `month` (`1`–`12`), or an explicit `start` and `end` (`YYYY-MM-DD`).
 
@@ -161,6 +162,12 @@ Yes. Every shortcode and Elementor surface accepts per-instance overrides (locat
 2. A candle-lighting shortcode rendered on the front end.
 
 == Changelog ==
+
+= 1.4.0 =
+
+* Changed: shortcodes now return plain inline text by default (no wrapper, no classes), so they inherit the formatting of the text they sit in. Lists and tables flatten to lines separated by line breaks. Use `format="html"` for the previous structured markup.
+* Changed: the small "Calendar data by Hebcal.com" credit is now off by default on every shortcode. Add `show_credit="1"` to show it. Please keep a Hebcal credit (CC BY 4.0) somewhere on the site, for example in the footer.
+* New: "Nekudos" setting (Luach > Display). Off by default, so Hebrew text now appears unpointed everywhere (holiday names, the Hebrew date and its day / month / year parts, yahrzeit items). Tick it to keep the vowel points Hebcal returns for some words, such as month names. Maqaf and the geresh / gershayim in dates are always kept. Note: with the default off, pointed Hebrew that previously displayed (e.g. in the Hebrew date) now appears without nekudos until you turn the setting on.
 
 = 1.3.0 =
 

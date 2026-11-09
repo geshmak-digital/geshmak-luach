@@ -111,6 +111,7 @@ if ( ! function_exists( 'geshmak_luach_register_settings' ) ) {
 		// --- Display -----------------------------------------------------------
 		add_settings_section( 'geshmak_luach_display', __( 'Display', 'geshmak-luach' ), '__return_false', GESHMAK_LUACH_SETTINGS_SLUG );
 		add_settings_field( 'translit', __( 'Transliteration', 'geshmak-luach' ), 'geshmak_luach_field_translit', GESHMAK_LUACH_SETTINGS_SLUG, 'geshmak_luach_display' );
+		add_settings_field( 'nekudos', __( 'Nekudos', 'geshmak-luach' ), 'geshmak_luach_field_nekudos', GESHMAK_LUACH_SETTINGS_SLUG, 'geshmak_luach_display' );
 		add_settings_field( 'zmanim_keys', __( 'Default zmanim shown', 'geshmak-luach' ), 'geshmak_luach_field_zmanim_keys', GESHMAK_LUACH_SETTINGS_SLUG, 'geshmak_luach_display' );
 		add_settings_field( 'date_format', __( 'Date format', 'geshmak-luach' ), 'geshmak_luach_field_date_format', GESHMAK_LUACH_SETTINGS_SLUG, 'geshmak_luach_display' );
 
@@ -166,7 +167,8 @@ if ( ! function_exists( 'geshmak_luach_sanitize_settings' ) ) {
 			$out['zmanim_keys'] = $defaults['zmanim_keys'];
 		}
 
-		$out['date_format'] = isset( $input['date_format'] ) ? sanitize_text_field( $input['date_format'] ) : '';
+		$out['nekudos']     = empty( $input['nekudos'] ) ? 0 : 1;
+		$out['date_format'] =isset( $input['date_format'] ) ? sanitize_text_field( $input['date_format'] ) : '';
 		$out['cache_ttl']   = isset( $input['cache_ttl'] ) ? max( MINUTE_IN_SECONDS, absint( $input['cache_ttl'] ) ) : $defaults['cache_ttl'];
 
 		// Drop the in-memory settings cache so the next request reads fresh values.
@@ -334,6 +336,14 @@ if ( ! function_exists( 'geshmak_luach_field_translit' ) ) {
 		}
 		echo '</select>';
 		echo '<p class="description">' . esc_html__( 'The original Hebrew is always available alongside the transliteration.', 'geshmak-luach' ) . '</p>';
+	}
+}
+
+if ( ! function_exists( 'geshmak_luach_field_nekudos' ) ) {
+	function geshmak_luach_field_nekudos() {
+		$val = geshmak_luach_get_opt( 'nekudos' );
+		echo '<label><input type="checkbox" name="' . esc_attr( GESHMAK_LUACH_OPTION ) . '[nekudos]" value="1" ' . checked( 1, $val, false ) . ' /> ';
+		echo esc_html__( 'Show nekudos (vowel points) in Hebrew text. Off by default: Hebrew appears unpointed.', 'geshmak-luach' ) . '</label>';
 	}
 }
 
