@@ -4,7 +4,7 @@ Donate link:
 Tags: hebcal, jewish calendar, zmanim, candle lighting, parsha, hebrew date, elementor
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -161,6 +161,10 @@ Yes. Every shortcode and Elementor surface accepts per-instance overrides (locat
 2. A candle-lighting shortcode rendered on the front end.
 
 == Changelog ==
+
+= 1.3.0 =
+
+* New: location search on the settings page. Type a city name, pick it from the list, and the GeoNames ID, timezone and elevation are filled in for you (using Hebcal's own city search). The place name is remembered so the page shows "Melbourne, Victoria, Australia" rather than a bare number. The manual GeoNames ID field is still there as a fallback.
 
 = 1.2.0 =
 

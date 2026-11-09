@@ -138,6 +138,7 @@ if ( ! function_exists( 'geshmak_luach_sanitize_settings' ) ) {
 		$out      = array();
 
 		$out['geonameid']    = isset( $input['geonameid'] ) ? preg_replace( '/[^0-9]/', '', $input['geonameid'] ) : '';
+		$out['location_name'] = ( isset( $input['location_name'] ) && ! empty( $out['geonameid'] ) ) ? sanitize_text_field( $input['location_name'] ) : '';
 		$out['latitude']     = isset( $input['latitude'] ) && '' !== $input['latitude'] ? (string) floatval( $input['latitude'] ) : '';
 		$out['longitude']    = isset( $input['longitude'] ) && '' !== $input['longitude'] ? (string) floatval( $input['longitude'] ) : '';
 		$out['tzid']         = isset( $input['tzid'] ) ? sanitize_text_field( $input['tzid'] ) : '';
@@ -203,15 +204,37 @@ if ( ! function_exists( 'geshmak_luach_section_location' ) ) {
 
 if ( ! function_exists( 'geshmak_luach_field_geonameid' ) ) {
 	function geshmak_luach_field_geonameid() {
-		$val = geshmak_luach_get_opt( 'geonameid' );
+		$val  = geshmak_luach_get_opt( 'geonameid' );
+		$name = geshmak_luach_get_opt( 'location_name' );
+		?>
+		<style>
+			#geshmak-luach-lookup { position: relative; max-width: 25em; margin-bottom: 8px; }
+			#geshmak-luach-lookup .geshmak-luach-lookup__q { width: 100%; }
+			#geshmak-luach-lookup .geshmak-luach-lookup__results { position: absolute; z-index: 10; left: 0; right: 0; margin: 2px 0 0; padding: 0; list-style: none; background: #fff; border: 1px solid #8c8f94; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,.15); max-height: 280px; overflow: auto; }
+			#geshmak-luach-lookup .geshmak-luach-lookup__results li { margin: 0; padding: 6px 10px; cursor: pointer; }
+			#geshmak-luach-lookup .geshmak-luach-lookup__results li:hover, #geshmak-luach-lookup .geshmak-luach-lookup__results li:focus { background: #f0f0f1; outline: 0; }
+			#geshmak-luach-lookup .geshmak-luach-lookup__status { margin: 4px 0 0; color: #50575e; }
+		</style>
+		<div id="geshmak-luach-lookup">
+			<input type="search" class="geshmak-luach-lookup__q regular-text" value="<?php echo esc_attr( $name ); ?>" placeholder="<?php echo esc_attr__( 'Search for a city, e.g. Melbourne', 'geshmak-luach' ); ?>" autocomplete="off" aria-label="<?php echo esc_attr__( 'Search for a location', 'geshmak-luach' ); ?>" />
+			<ul class="geshmak-luach-lookup__results" role="listbox" hidden></ul>
+			<p class="geshmak-luach-lookup__status description" aria-live="polite"></p>
+		</div>
+		<?php
 		printf(
-			'<input type="text" name="%1$s[geonameid]" value="%2$s" class="regular-text" inputmode="numeric" /> ',
+			'<input type="hidden" name="%1$s[location_name]" value="%2$s" />',
 			esc_attr( GESHMAK_LUACH_OPTION ),
-			esc_attr( $val )
+			esc_attr( $name )
+		);
+		printf(
+			'<label>%3$s <input type="text" name="%1$s[geonameid]" value="%2$s" class="small-text" inputmode="numeric" /></label> ',
+			esc_attr( GESHMAK_LUACH_OPTION ),
+			esc_attr( $val ),
+			esc_html__( 'GeoNames ID', 'geshmak-luach' )
 		);
 		printf(
 			'<p class="description">%s <a href="%s" target="_blank" rel="noopener">%s</a>.</p>',
-			esc_html__( 'Primary location. Look up your city ID at', 'geshmak-luach' ),
+			esc_html__( 'Search above to fill this in (it also fills the timezone and elevation). Or enter an ID directly; look one up at', 'geshmak-luach' ),
 			esc_url( 'https://www.geonames.org/' ),
 			esc_html__( 'GeoNames', 'geshmak-luach' )
 		);
