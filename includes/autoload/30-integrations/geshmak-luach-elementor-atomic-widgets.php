@@ -428,7 +428,7 @@ if ( ! function_exists( 'geshmak_luach_define_atomic_widgets' ) ) {
 			}
 
 			public function get_title(): string {
-				return __( 'Geshmak Luach Text', 'geshmak-luach' );
+				return __( 'Geshmak Luach text', 'geshmak-luach' );
 			}
 
 			/**
@@ -484,6 +484,8 @@ if ( ! function_exists( 'geshmak_luach_define_atomic_widgets' ) ) {
 						'havdalah_mins' => String_Prop_Type::make()->default( '' ),
 						'date_format'   => String_Prop_Type::make()->default( '' ),
 						'time_format'   => String_Prop_Type::make()->default( '' ),
+						'prepend'       => String_Prop_Type::make()->default( '' ),
+						'append'        => String_Prop_Type::make()->default( '' ),
 					)
 				);
 			}
@@ -508,17 +510,44 @@ if ( ! function_exists( 'geshmak_luach_define_atomic_widgets' ) ) {
 								Select_Control::bind_to( 'zman' )
 									->set_label( __( 'Zman (when "A single zman" is chosen)', 'geshmak-luach' ) )
 									->set_options( self::select_options( geshmak_luach_zman_labels() ) ),
+								Text_Control::bind_to( 'prepend' )
+									->set_label( __( 'Text before', 'geshmak-luach' ) ),
+								Text_Control::bind_to( 'append' )
+									->set_label( __( 'Text after', 'geshmak-luach' ) ),
 							)
 						),
 				);
 
-				// Shared Luach section: location, transliteration, Hebrew, credit.
-				$controls = array_merge( $controls, parent::define_atomic_controls() );
+				// Display options: transliteration, Hebrew, credit.
+				$controls[] = Section::make()
+					->set_label( __( 'Display options', 'geshmak-luach' ) )
+					->set_items(
+						array(
+							Select_Control::bind_to( 'translit' )
+								->set_label( __( 'Transliteration', 'geshmak-luach' ) )
+								->set_options(
+									self::select_options(
+										array(
+											''         => __( 'Site default', 'geshmak-luach' ),
+											'ashkenaz' => __( 'Modern Ashkenaz', 'geshmak-luach' ),
+											'sephardi' => __( 'Sephardi', 'geshmak-luach' ),
+											'hebrew'   => __( 'Hebrew only', 'geshmak-luach' ),
+										)
+									)
+								),
+							Switch_Control::bind_to( 'show_hebrew' )
+								->set_label( __( 'Show Hebrew', 'geshmak-luach' ) ),
+							Switch_Control::bind_to( 'show_credit' )
+								->set_label( __( 'Show Hebcal credit', 'geshmak-luach' ) ),
+						)
+					);
 
 				$controls[] = Section::make()
 					->set_label( __( 'Luach overrides', 'geshmak-luach' ) )
 					->set_items(
 						array(
+							Text_Control::bind_to( 'geonameid' )
+								->set_label( __( 'GeoNames ID (location)', 'geshmak-luach' ) ),
 							Select_Control::bind_to( 'israel' )
 								->set_label( __( 'Schedule', 'geshmak-luach' ) )
 								->set_options(
@@ -726,6 +755,15 @@ if ( ! function_exists( 'geshmak_luach_define_atomic_widgets' ) ) {
 					$text = '';
 				}
 				geshmak_luach_format_overrides( array( 'date' => '', 'time' => '' ) );
+
+				// Text before / after — only when there is something to show, so a
+				// bare "Today's daf is " never appears on its own. Spaces are kept
+				// exactly as typed.
+				if ( '' !== $text ) {
+					$before = isset( $settings['prepend'] ) ? (string) $settings['prepend'] : '';
+					$after  = isset( $settings['append'] ) ? (string) $settings['append'] : '';
+					$text   = esc_html( $before ) . $text . esc_html( $after );
+				}
 
 				if ( ! empty( $settings['show_credit'] ) && '' !== $text ) {
 					$text .= ' ' . geshmak_luach_attribution_html( array(), true );

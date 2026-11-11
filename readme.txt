@@ -1,15 +1,15 @@
-=== Geshmak! - Luach ===
+=== Geshmak! Luach ===
 Contributors: Tom Kriha Goldstein (tom@krihagoldstein.com.au)
 Donate link:
 Tags: hebcal, jewish calendar, zmanim, candle lighting, parsha, hebrew date, elementor
 Requires at least: 6.0
 Tested up to: 6.7
-Stable tag: 1.5.0
+Stable tag: 1.5.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Access the full Hebcal API suite to WordPress, Elementor and Elementor Atomic — candle lighting, parsha, zmanim, Hebrew dates, holidays, leyning and yahrzeits. https://geshmak.com.au
+Adding Jewish calendar calculations in WordPress and Elementor made easy. Access the full Hebcal API suite: Jewish calendar, candle lighting, parsha, zmanim, Hebrew dates, holidays, leyning and yahrzeits; through WordPress shortcodes, Elementor (V3) dynamic tags and Elementor Atomic (V4) widgets. Aggressively cached, transliteration-aware, RTL-ready.
 
 == Description ==
 
@@ -137,7 +137,7 @@ Search the V4 widget panel for "Luach" and drag any of these in. Each widget has
 * **Geshmak Luach Hebrew Date** — today's Hebrew date.
 * **Geshmak Luach Zmanim** — a zmanim table (with a *Show all available times* toggle; otherwise shows your configured default set).
 * **Geshmak Luach Today Panel** — a compact panel combining today's Hebrew date, the parsha and the next candle lighting.
-* **Geshmak Luach Text** — one plain text element showing any Luach calculation. Choose the HTML tag (P, DIV, H1–H6 or SPAN), pick what to show (parsha, parsha with Torah / Haftarah, special Shabbos, candle lighting, havdalah, both, Hebrew date, Gregorian date, next holiday, upcoming holidays, molad, a single zman, the zmanim list, or whether melacha is forbidden now), and override location (GeoNames ID), Israel / Diaspora schedule, candle-lighting minutes, havdalah method, transliteration, date format and time format for just that widget. It outputs plain text with no markup of its own, so the Style tab controls its typography, colour and spacing completely.
+* **Geshmak Luach text** — one plain text element showing any Luach calculation. Choose the HTML tag (P, DIV, H1–H6 or SPAN), pick what to show (parsha, parsha with Torah / Haftarah, special Shabbos, candle lighting, havdalah, both, Hebrew date, Gregorian date, next holiday, upcoming holidays, molad, a single zman, the zmanim list, or whether melacha is forbidden now), add text before and after the result, and override location (GeoNames ID), Israel / Diaspora schedule, candle-lighting minutes, havdalah method, transliteration, date format and time format for just that widget. It outputs plain text with no markup of its own, so the Style tab controls its typography, colour and spacing completely.
 
 = Theme template tags (for developers) =
 
@@ -164,10 +164,16 @@ Yes. Every shortcode and Elementor surface accepts per-instance overrides (locat
 
 == Changelog ==
 
+= 1.5.1 =
+
+* Changed: the Elementor widget is now called **Geshmak Luach text**.
+* New: Geshmak Luach text can add text before and after its result (for example "Today's daf is " …). Nothing is added when the calculation returns nothing, so a lone prefix never appears.
+* Changed: in Geshmak Luach text the GeoNames ID moved into the "Luach overrides" section, and the "Luach" section is now "Display options".
+
 = 1.5.0 =
 
 * New: **Time format** setting (Luach > Display), next to Date format. Blank uses the site time format.
-* New: **Geshmak Luach Text** atomic widget — any calculation as plain text in a tag of your choice (P, DIV, H1–H6, SPAN), with per-widget overrides for location, Israel / Diaspora, candle-lighting offset, havdalah method, transliteration, date format and time format. Fully styleable from the Style tab.
+* New: **Geshmak Luach text** atomic widget — any calculation as plain text in a tag of your choice (P, DIV, H1–H6, SPAN), with per-widget overrides for location, Israel / Diaspora, candle-lighting offset, havdalah method, transliteration, date format and time format. Fully styleable from the Style tab.
 
 = 1.4.0 =
 
